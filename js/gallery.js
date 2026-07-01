@@ -81,6 +81,53 @@ window.galleryHelpers = {
   closeLightbox() {
     const lb = document.getElementById('lightbox');
     if (lb) lb.classList.remove('active');
+  },
+
+  filterEscorts(escorts, { search, edadMin, edadMax, sort } = {}) {
+    let filtered = escorts ? [...escorts] : [];
+
+    if (search) {
+      const q = search.toLowerCase();
+      filtered = filtered.filter(e =>
+        (e.nombre || '').toLowerCase().includes(q) ||
+        (e.ubicacion || '').toLowerCase().includes(q)
+      );
+    }
+
+    if (edadMin) {
+      filtered = filtered.filter(e => e.edad && e.edad >= parseInt(edadMin));
+    }
+
+    if (edadMax) {
+      filtered = filtered.filter(e => e.edad && e.edad <= parseInt(edadMax));
+    }
+
+    if (sort === 'nombre') {
+      filtered.sort((a, b) => (a.nombre || '').localeCompare(b.nombre || ''));
+    } else {
+      filtered.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+    }
+
+    return filtered;
+  },
+
+  async renderGrid(escorts, containerId) {
+    const grid = document.getElementById(containerId);
+    if (!grid) return;
+    grid.classList.add('filtering');
+    grid.innerHTML = '';
+
+    if (escorts.length === 0) {
+      grid.innerHTML = '<p style="grid-column:1/-1;text-align:center;padding:3rem 1rem;color:var(--text-secondary);">No encontramos perfiles con esos filtros.</p>';
+      grid.classList.remove('filtering');
+      return;
+    }
+
+    for (const escort of escorts) {
+      const portada = await this.fetchPortada(escort.id);
+      grid.appendChild(this.renderCard(escort, portada.url));
+    }
+    grid.classList.remove('filtering');
   }
 };
 

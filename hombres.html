@@ -22,6 +22,27 @@
   </header>
 
   <h2 class="section-title">Hombres</h2>
+
+  <div class="filter-bar">
+    <div class="filter-search">
+      <span class="search-icon">&#x1F50D;</span>
+      <input type="text" id="filter-search" placeholder="Buscar por nombre o ubicación..." autocomplete="off">
+    </div>
+    <div class="filter-group">
+      <label>Edad</label>
+      <input type="number" id="filter-edad-min" placeholder="Min" min="18" max="99">
+      <span style="color:var(--text-secondary);">—</span>
+      <input type="number" id="filter-edad-max" placeholder="Max" min="18" max="99">
+    </div>
+    <div class="filter-group">
+      <label>Ordenar</label>
+      <select id="filter-sort">
+        <option value="fecha">Más nuevas</option>
+        <option value="nombre">Nombre A-Z</option>
+      </select>
+    </div>
+  </div>
+
   <div class="grid" id="escorts-grid"></div>
 
   <div id="lightbox" class="lightbox">
@@ -37,11 +58,23 @@
     document.addEventListener('DOMContentLoaded', async () => {
       try {
         const escorts = await galleryHelpers.fetchEscorts('hombres');
-        const grid = document.getElementById('escorts-grid');
-        for (const escort of escorts) {
-          const portada = await galleryHelpers.fetchPortada(escort.id);
-          grid.appendChild(galleryHelpers.renderCard(escort, portada.url));
+
+        async function applyFilters() {
+          const filtered = galleryHelpers.filterEscorts(escorts, {
+            search: document.getElementById('filter-search').value,
+            edadMin: document.getElementById('filter-edad-min').value,
+            edadMax: document.getElementById('filter-edad-max').value,
+            sort: document.getElementById('filter-sort').value
+          });
+          await galleryHelpers.renderGrid(filtered, 'escorts-grid');
         }
+
+        document.getElementById('filter-search').addEventListener('input', applyFilters);
+        document.getElementById('filter-edad-min').addEventListener('input', applyFilters);
+        document.getElementById('filter-edad-max').addEventListener('input', applyFilters);
+        document.getElementById('filter-sort').addEventListener('change', applyFilters);
+
+        await applyFilters();
       } catch (err) { console.error(err); }
     });
   </script>
