@@ -105,9 +105,7 @@
       let escortId = null;
 
       const { data: escort } = await window.supabaseClient
-        .from('escorts')
-        .select('*')
-        .eq('user_id', user.id)
+        .rpc('get_my_profile')
         .maybeSingle();
 
       if (escort) {

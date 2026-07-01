@@ -15,9 +15,7 @@ window.galleryHelpers = {
 
   async fetchEscortBySlug(slug) {
     const { data, error } = await window.supabaseClient
-      .from('escorts')
-      .select('*')
-      .eq('slug', slug)
+      .rpc('get_escort_decrypted', { slug_param: slug })
       .single();
     if (error) throw error;
     return data;
