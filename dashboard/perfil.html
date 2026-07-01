@@ -75,6 +75,23 @@
           </div>
         </div>
 
+        <hr style="border-color:var(--border);margin:2rem 0;">
+
+        <h3 style="margin-bottom:1rem;">Verificación de identidad</h3>
+
+        <div class="form-group">
+          <label>Foto de tu DNI</label>
+          <p style="color:var(--text-secondary);font-size:.85rem;margin-bottom:.5rem;">
+            Subí una foto de tu DNI para verificar que sos mayor de edad.
+            Solo visible para administradores.
+          </p>
+          <div class="upload-area" id="dni-upload-area" style="padding:1.5rem;">
+            <input type="file" id="dni-upload" accept="image/*">
+            <p id="dni-status">Hacé click para subir</p>
+          </div>
+          <div id="verification-status"></div>
+        </div>
+
         <button type="submit" class="btn btn-gold">Guardar</button>
       </form>
     </main>
@@ -85,6 +102,8 @@
       const user = await authHelpers.requireAuth();
       if (!user) return;
 
+      let escortId = null;
+
       const { data: escort } = await window.supabaseClient
         .from('escorts')
         .select('*')
@@ -92,6 +111,7 @@
         .maybeSingle();
 
       if (escort) {
+        escortId = escort.id;
         document.getElementById('nombre').value = escort.nombre || '';
         document.getElementById('slug').value = escort.slug || '';
         document.getElementById('categoria').value = escort.categoria || 'mujeres';
@@ -100,6 +120,20 @@
         document.getElementById('bio').value = escort.bio || '';
         document.getElementById('instagram').value = escort.instagram || '';
         document.getElementById('whatsapp').value = escort.whatsapp || '';
+      }
+
+      if (escortId) {
+        const { data: verif } = await window.supabaseClient
+          .from('verification_photos')
+          .select('verified')
+          .eq('escort_id', escortId)
+          .maybeSingle();
+
+        if (verif?.verified) {
+          document.getElementById('verification-status').innerHTML =
+            '<span style="color:var(--gold);font-size:.85rem;">✓ Documento verificado</span>';
+          document.getElementById('dni-upload-area').style.display = 'none';
+        }
       }
 
       document.getElementById('profile-form').addEventListener('submit', async (e) => {
@@ -120,11 +154,40 @@
         if (escort) {
           await window.supabaseClient.from('escorts').update(formData).eq('id', escort.id);
         } else {
-          await window.supabaseClient.from('escorts').insert(formData);
+          const { data: newEscort } = await window.supabaseClient.from('escorts').insert(formData).select().single();
+          escortId = newEscort.id;
         }
 
         alert('Perfil guardado correctamente');
         window.location.href = '/dashboard/';
+      });
+
+      document.getElementById('dni-upload-area').addEventListener('click', () => {
+        document.getElementById('dni-upload').click();
+      });
+
+      document.getElementById('dni-upload').addEventListener('change', async (e) => {
+        const file = e.target.files[0];
+        if (!file || !escortId) return;
+
+        const ext = file.name.split('.').pop();
+        const path = `dni_${escortId}.${ext}`;
+
+        document.getElementById('dni-status').textContent = 'Subiendo...';
+
+        await window.supabaseClient.storage.from('verification-docs').upload(path, file, { upsert: true });
+
+        const { data: { publicUrl } } = window.supabaseClient.storage.from('verification-docs').getPublicUrl(path);
+
+        await window.supabaseClient.from('verification_photos').upsert({
+          escort_id: escortId,
+          url: publicUrl,
+          verified: false
+        });
+
+        document.getElementById('dni-status').textContent = '✓ Documento recibido';
+        document.getElementById('verification-status').innerHTML =
+          '<span style="color:var(--text-secondary);font-size:.85rem;">Recibido. Esperá verificación del administrador.</span>';
       });
     });
   </script>

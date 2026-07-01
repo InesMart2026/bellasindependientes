@@ -79,4 +79,23 @@ CREATE POLICY "subscriptions_select_own" ON subscriptions
 CREATE POLICY "subscriptions_insert_own" ON subscriptions
   FOR INSERT WITH CHECK (auth.uid() = (SELECT user_id FROM escorts WHERE id = subscriptions.escort_id));
 
+-- Verification photos (DNI)
+CREATE TABLE verification_photos (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  escort_id UUID REFERENCES escorts(id) ON DELETE CASCADE NOT NULL,
+  url TEXT NOT NULL,
+  verified BOOLEAN DEFAULT false,
+  verified_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+
+ALTER TABLE verification_photos ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "verif_insert_own" ON verification_photos
+  FOR INSERT WITH CHECK (auth.uid() = (SELECT user_id FROM escorts WHERE id = escort_id));
+
+CREATE POLICY "verif_select_own" ON verification_photos
+  FOR SELECT USING (auth.uid() = (SELECT user_id FROM escorts WHERE id = escort_id));
+
 INSERT INTO storage.buckets (id, name, public) VALUES ('escort-photos', 'escort-photos', true);
+INSERT INTO storage.buckets (id, name, public) VALUES ('verification-docs', 'verification-docs', false);
