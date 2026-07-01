@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard — ECR</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="/css/dashboard.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/js/supabase.js"></script>
+  <script src="/js/auth.js"></script>
+  <script src="/js/gallery.js"></script>
+  <script src="/js/upload.js"></script>
+</head>
+<body>
+  <div class="dashboard-layout">
+    <aside class="dashboard-sidebar">
+      <a href="/dashboard/" class="header-logo">ECR</a>
+      <ul class="dashboard-nav">
+        <li><a href="/dashboard/" class="active">Panel</a></li>
+        <li><a href="/dashboard/fotos.html">Mis Fotos</a></li>
+        <li><a href="/dashboard/perfil.html">Mi Perfil</a></li>
+        <li><a href="/dashboard/plan.html">Mi Plan</a></li>
+        <li><a href="#" onclick="authHelpers.logout()">Cerrar sesión</a></li>
+      </ul>
+    </aside>
+
+    <main class="dashboard-main">
+      <div class="dashboard-header">
+        <h2>Panel de Control</h2>
+      </div>
+
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem;" id="stats">
+        <div class="plan-card" style="text-align:left;">
+          <p style="color:var(--text-secondary);font-size:.85rem;">Fotos subidas</p>
+          <p style="font-size:2rem;color:var(--gold);font-weight:700;" id="photo-count">—</p>
+        </div>
+        <div class="plan-card" style="text-align:left;">
+          <p style="color:var(--text-secondary);font-size:.85rem;">Plan actual</p>
+          <p style="font-size:1.2rem;" id="current-plan">—</p>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      const user = await authHelpers.requireAuth();
+      if (!user) return;
+
+      const { data: escort } = await window.supabaseClient
+        .from('escorts')
+        .select('*')
+        .eq('user_id', user.id)
+        .single();
+
+      if (!escort) {
+        window.location.href = '/dashboard/perfil.html';
+        return;
+      }
+
+      const { count } = await window.supabaseClient
+        .from('photos')
+        .select('*', { count: 'exact', head: true })
+        .eq('escort_id', escort.id);
+
+      document.getElementById('photo-count').textContent = count || 0;
+
+      const { data: sub } = await window.supabaseClient
+        .from('subscriptions')
+        .select('*, plans(*)')
+        .eq('escort_id', escort.id)
+        .gte('fin', new Date().toISOString().split('T')[0])
+        .maybeSingle();
+
+      document.getElementById('current-plan').textContent = sub ? sub.plans.nombre : 'Sin plan activo';
+    });
+  </script>
+</body>
+</html>

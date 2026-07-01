@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mis Fotos — ECR</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="/css/dashboard.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/js/supabase.js"></script>
+  <script src="/js/auth.js"></script>
+  <script src="/js/gallery.js"></script>
+  <script src="/js/upload.js" defer></script>
+</head>
+<body>
+  <div class="dashboard-layout">
+    <aside class="dashboard-sidebar">
+      <a href="/dashboard/" class="header-logo">ECR</a>
+      <ul class="dashboard-nav">
+        <li><a href="/dashboard/">Panel</a></li>
+        <li><a href="/dashboard/fotos.html" class="active">Mis Fotos</a></li>
+        <li><a href="/dashboard/perfil.html">Mi Perfil</a></li>
+        <li><a href="/dashboard/plan.html">Mi Plan</a></li>
+        <li><a href="#" onclick="authHelpers.logout()">Cerrar sesión</a></li>
+      </ul>
+    </aside>
+
+    <main class="dashboard-main">
+      <div class="dashboard-header">
+        <h2>Mis Fotos</h2>
+      </div>
+
+      <div class="upload-area" id="upload-area">
+        <p style="font-size:2rem;color:var(--gold);">+</p>
+        <p>Hacé click o arrastrá fotos acá</p>
+        <p style="font-size:.8rem;">JPG, PNG, WebP — Máx 5MB</p>
+        <input type="file" id="file-input" accept="image/*" multiple>
+      </div>
+
+      <div class="dash-gallery" id="photos-grid"></div>
+    </main>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      const user = await authHelpers.requireAuth();
+      if (!user) return;
+
+      const { data: escort } = await window.supabaseClient
+        .from('escorts')
+        .select('id')
+        .eq('user_id', user.id)
+        .single();
+
+      if (!escort) { window.location.href = '/dashboard/perfil.html'; return; }
+
+      async function loadPhotos() {
+        const photos = await galleryHelpers.fetchPhotos(escort.id);
+        const grid = document.getElementById('photos-grid');
+        grid.innerHTML = '';
+
+        photos.forEach(photo => {
+          const item = document.createElement('div');
+          item.className = 'dash-gallery-item';
+          item.innerHTML = `
+            <img src="${photo.url}" loading="lazy">
+            <button class="delete-btn" data-id="${photo.id}">×</button>
+          `;
+          grid.appendChild(item);
+        });
+
+        grid.querySelectorAll('.delete-btn').forEach(btn => {
+          btn.addEventListener('click', async () => {
+            if (!confirm('¿Eliminar esta foto?')) return;
+            await uploadHelpers.deletePhoto(btn.dataset.id);
+            loadPhotos();
+          });
+        });
+      }
+
+      document.getElementById('upload-area').addEventListener('click', () => {
+        document.getElementById('file-input').click();
+      });
+
+      document.getElementById('file-input').addEventListener('change', async (e) => {
+        for (const file of e.target.files) {
+          await uploadHelpers.uploadPhoto(escort.id, file);
+        }
+        loadPhotos();
+      });
+
+      const area = document.getElementById('upload-area');
+      area.addEventListener('dragover', (e) => { e.preventDefault(); area.style.borderColor = 'var(--gold)'; });
+      area.addEventListener('dragleave', () => { area.style.borderColor = ''; });
+      area.addEventListener('drop', async (e) => {
+        e.preventDefault();
+        area.style.borderColor = '';
+        for (const file of e.dataTransfer.files) {
+          if (file.type.startsWith('image/')) {
+            await uploadHelpers.uploadPhoto(escort.id, file);
+          }
+        }
+        loadPhotos();
+      });
+
+      await loadPhotos();
+    });
+  </script>
+</body>
+</html>

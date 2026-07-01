@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Perfil — ECR</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/js/supabase.js"></script>
+  <script src="/js/gallery.js" defer></script>
+</head>
+<body>
+  <header class="header">
+    <a href="/" class="header-logo">ECR</a>
+    <nav class="header-nav">
+      <a href="/mujeres.html">Mujeres</a>
+      <a href="/hombres.html">Hombres</a>
+      <a href="/trans.html">Trans</a>
+      <a href="/planes.html">Planes</a>
+      <a href="/dashboard/login.html">Acceder</a>
+    </nav>
+  </header>
+
+  <div id="profile-container"></div>
+
+  <div id="lightbox" class="lightbox">
+    <button class="lightbox-close" onclick="galleryHelpers.closeLightbox()">×</button>
+    <img src="" alt="Foto">
+  </div>
+
+  <footer class="footer">
+    <p>ECR &copy; 2026 &mdash; Todos los derechos reservados</p>
+  </footer>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      const params = new URLSearchParams(window.location.search);
+      const slug = params.get('slug');
+
+      if (!slug) {
+        document.getElementById('profile-container').innerHTML = '<p style="padding:2rem;color:#888;">Perfil no encontrado</p>';
+        return;
+      }
+
+      try {
+        const escort = await galleryHelpers.fetchEscortBySlug(slug);
+        const photos = await galleryHelpers.fetchPhotos(escort.id);
+        const portada = photos.find(p => p.es_portada) || photos[0];
+
+        const container = document.getElementById('profile-container');
+
+        let socialHtml = '';
+        if (escort.instagram) socialHtml += `<a href="https://instagram.com/${escort.instagram}" target="_blank">Instagram</a>`;
+        if (escort.whatsapp) socialHtml += `<a href="https://wa.me/${escort.whatsapp}" target="_blank">WhatsApp</a>`;
+
+        container.innerHTML = `
+          <div class="profile-hero">
+            <img src="${portada?.url || 'https://via.placeholder.com/1200x600?text=Sin+foto'}" alt="${escort.nombre}">
+            <div class="profile-info">
+              <h1>${escort.nombre}${escort.edad ? ', ' + escort.edad : ''}</h1>
+              <div class="profile-meta">
+                <span>${escort.categoria}</span>
+                ${escort.ubicacion ? `<span>${escort.ubicacion}</span>` : ''}
+              </div>
+            </div>
+          </div>
+
+          <div class="profile-content">
+            <div>
+              <h3>Sobre mí</h3>
+              <div class="profile-bio">
+                <p>${escort.bio || 'Sin descripción'}</p>
+              </div>
+              <div class="profile-social">${socialHtml || '<p style="color:#888;">Sin redes</p>'}</div>
+            </div>
+
+            <div>
+              <h3>Galería</h3>
+              <div class="gallery-grid" id="gallery-grid"></div>
+            </div>
+          </div>
+        `;
+
+        galleryHelpers.renderPhotoGrid(photos, 'gallery-grid');
+      } catch (err) {
+        document.getElementById('profile-container').innerHTML = '<p style="padding:2rem;color:#888;">Perfil no encontrado</p>';
+      }
+    });
+  </script>
+</body>
+</html>

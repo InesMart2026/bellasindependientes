@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Trans — ECR</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/js/supabase.js"></script>
+  <script src="/js/gallery.js" defer></script>
+</head>
+<body>
+  <header class="header">
+    <a href="/" class="header-logo">ECR</a>
+    <nav class="header-nav">
+      <a href="/mujeres.html">Mujeres</a>
+      <a href="/hombres.html">Hombres</a>
+      <a href="/trans.html">Trans</a>
+      <a href="/planes.html">Planes</a>
+      <a href="/dashboard/login.html">Acceder</a>
+    </nav>
+  </header>
+
+  <h2 class="section-title">Trans</h2>
+  <div class="grid" id="escorts-grid"></div>
+
+  <div id="lightbox" class="lightbox">
+    <button class="lightbox-close" onclick="galleryHelpers.closeLightbox()">×</button>
+    <img src="" alt="Foto">
+  </div>
+
+  <footer class="footer">
+    <p>ECR &copy; 2026 &mdash; Todos los derechos reservados</p>
+  </footer>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      try {
+        const escorts = await galleryHelpers.fetchEscorts('trans');
+        const grid = document.getElementById('escorts-grid');
+        for (const escort of escorts) {
+          const portada = await galleryHelpers.fetchPortada(escort.id);
+          grid.appendChild(galleryHelpers.renderCard(escort, portada.url));
+        }
+      } catch (err) { console.error(err); }
+    });
+  </script>
+</body>
+</html>

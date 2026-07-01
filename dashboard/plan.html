@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mi Plan — ECR</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="/css/dashboard.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/js/supabase.js"></script>
+  <script src="/js/auth.js" defer></script>
+</head>
+<body>
+  <div class="dashboard-layout">
+    <aside class="dashboard-sidebar">
+      <a href="/dashboard/" class="header-logo">ECR</a>
+      <ul class="dashboard-nav">
+        <li><a href="/dashboard/">Panel</a></li>
+        <li><a href="/dashboard/fotos.html">Mis Fotos</a></li>
+        <li><a href="/dashboard/perfil.html">Mi Perfil</a></li>
+        <li><a href="/dashboard/plan.html" class="active">Mi Plan</a></li>
+        <li><a href="#" onclick="authHelpers.logout()">Cerrar sesión</a></li>
+      </ul>
+    </aside>
+
+    <main class="dashboard-main">
+      <div class="dashboard-header">
+        <h2>Mi Plan</h2>
+      </div>
+
+      <div id="plan-status"></div>
+      <div id="plans-offer" style="display:flex;gap:2rem;flex-wrap:wrap;margin-top:2rem;"></div>
+    </main>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      const user = await authHelpers.requireAuth();
+      if (!user) return;
+
+      const { data: escort } = await window.supabaseClient
+        .from('escorts')
+        .select('id')
+        .eq('user_id', user.id)
+        .single();
+
+      if (!escort) { window.location.href = '/dashboard/perfil.html'; return; }
+
+      const { data: sub } = await window.supabaseClient
+        .from('subscriptions')
+        .select('*, plans(*)')
+        .eq('escort_id', escort.id)
+        .gte('fin', new Date().toISOString().split('T')[0])
+        .maybeSingle();
+
+      const statusDiv = document.getElementById('plan-status');
+      if (sub && sub.paga) {
+        statusDiv.innerHTML = `
+          <div class="plan-card" style="text-align:left;">
+            <h3>${sub.plans.nombre}</h3>
+            <p style="color:var(--gold);margin:.5rem 0;">✓ Activo</p>
+            <p style="color:var(--text-secondary);font-size:.85rem;">
+              Vigente hasta: ${new Date(sub.fin).toLocaleDateString('es-AR')}
+            </p>
+          </div>
+        `;
+      } else {
+        statusDiv.innerHTML = '<p style="color:var(--text-secondary);">No tenés un plan activo. Elegí uno para publicar tu perfil.</p>';
+
+        const { data: plans } = await window.supabaseClient.from('plans').select('*').order('precio');
+        const offerDiv = document.getElementById('plans-offer');
+        plans.forEach(plan => {
+          offerDiv.innerHTML += `
+            <div class="plan-card">
+              <h3>${plan.nombre}</h3>
+              <div class="plan-price">$${plan.precio.toLocaleString('es-AR')}</div>
+              <ul class="plan-features">
+                <li>${plan.duracion_dias} días</li>
+                <li>Hasta ${plan.max_fotos} fotos</li>
+              </ul>
+              <button class="btn btn-gold" onclick="alert('Mercado Pago próximamente. Contactanos para activar tu plan.')">Contratar</button>
+            </div>
+          `;
+        });
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mi Perfil — ECR</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="/css/dashboard.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/js/supabase.js"></script>
+  <script src="/js/auth.js" defer></script>
+</head>
+<body>
+  <div class="dashboard-layout">
+    <aside class="dashboard-sidebar">
+      <a href="/dashboard/" class="header-logo">ECR</a>
+      <ul class="dashboard-nav">
+        <li><a href="/dashboard/">Panel</a></li>
+        <li><a href="/dashboard/fotos.html">Mis Fotos</a></li>
+        <li><a href="/dashboard/perfil.html" class="active">Mi Perfil</a></li>
+        <li><a href="/dashboard/plan.html">Mi Plan</a></li>
+        <li><a href="#" onclick="authHelpers.logout()">Cerrar sesión</a></li>
+      </ul>
+    </aside>
+
+    <main class="dashboard-main">
+      <div class="dashboard-header">
+        <h2>Mi Perfil</h2>
+      </div>
+
+      <form id="profile-form" style="max-width:600px;">
+        <div class="form-group">
+          <label>Nombre público</label>
+          <input type="text" id="nombre" required placeholder="Ej: Sofía">
+        </div>
+
+        <div class="form-group">
+          <label>Slug (URL de tu perfil)</label>
+          <input type="text" id="slug" required placeholder="ej: sofia">
+        </div>
+
+        <div class="form-group">
+          <label>Categoría</label>
+          <select id="categoria">
+            <option value="mujeres">Mujeres</option>
+            <option value="hombres">Hombres</option>
+            <option value="trans">Trans</option>
+          </select>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+          <div class="form-group">
+            <label>Edad</label>
+            <input type="number" id="edad" min="18" max="99">
+          </div>
+          <div class="form-group">
+            <label>Ubicación</label>
+            <input type="text" id="ubicacion" placeholder="Ej: Buenos Aires">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Sobre vos</label>
+          <textarea id="bio" maxlength="500"></textarea>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+          <div class="form-group">
+            <label>Instagram (opcional)</label>
+            <input type="text" id="instagram" placeholder="@usuario">
+          </div>
+          <div class="form-group">
+            <label>WhatsApp (opcional)</label>
+            <input type="text" id="whatsapp" placeholder="5491112345678">
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-gold">Guardar</button>
+      </form>
+    </main>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      const user = await authHelpers.requireAuth();
+      if (!user) return;
+
+      const { data: escort } = await window.supabaseClient
+        .from('escorts')
+        .select('*')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (escort) {
+        document.getElementById('nombre').value = escort.nombre || '';
+        document.getElementById('slug').value = escort.slug || '';
+        document.getElementById('categoria').value = escort.categoria || 'mujeres';
+        document.getElementById('edad').value = escort.edad || '';
+        document.getElementById('ubicacion').value = escort.ubicacion || '';
+        document.getElementById('bio').value = escort.bio || '';
+        document.getElementById('instagram').value = escort.instagram || '';
+        document.getElementById('whatsapp').value = escort.whatsapp || '';
+      }
+
+      document.getElementById('profile-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const formData = {
+          nombre: document.getElementById('nombre').value,
+          slug: document.getElementById('slug').value,
+          categoria: document.getElementById('categoria').value,
+          edad: parseInt(document.getElementById('edad').value) || null,
+          ubicacion: document.getElementById('ubicacion').value,
+          bio: document.getElementById('bio').value,
+          instagram: document.getElementById('instagram').value,
+          whatsapp: document.getElementById('whatsapp').value,
+          user_id: user.id
+        };
+
+        if (escort) {
+          await window.supabaseClient.from('escorts').update(formData).eq('id', escort.id);
+        } else {
+          await window.supabaseClient.from('escorts').insert(formData);
+        }
+
+        alert('Perfil guardado correctamente');
+        window.location.href = '/dashboard/';
+      });
+    });
+  </script>
+</body>
+</html>

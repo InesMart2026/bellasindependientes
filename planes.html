@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Planes — ECR</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/js/supabase.js" defer></script>
+</head>
+<body>
+  <header class="header">
+    <a href="/" class="header-logo">ECR</a>
+    <nav class="header-nav">
+      <a href="/mujeres.html">Mujeres</a>
+      <a href="/hombres.html">Hombres</a>
+      <a href="/trans.html">Trans</a>
+      <a href="/planes.html">Planes</a>
+      <a href="/dashboard/login.html">Acceder</a>
+    </nav>
+  </header>
+
+  <h2 class="section-title">Planes de Suscripción</h2>
+  <p style="text-align:center;color:#888;max-width:600px;margin:0 auto 2rem;">
+    Publicá tu perfil y llegá a más clientes. Elegí el plan que mejor se adapte a vos.
+  </p>
+
+  <div style="display:flex;justify-content:center;gap:2rem;padding:0 2rem 3rem;flex-wrap:wrap;" id="plans-container"></div>
+
+  <footer class="footer">
+    <p>ECR &copy; 2026 &mdash; Todos los derechos reservados</p>
+  </footer>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      const { data: plans, error } = await window.supabaseClient
+        .from('plans')
+        .select('*')
+        .order('precio', { ascending: true });
+
+      if (error) return;
+
+      const container = document.getElementById('plans-container');
+      plans.forEach(plan => {
+        container.innerHTML += `
+          <div class="plan-card">
+            <h3>${plan.nombre}</h3>
+            <div class="plan-price">$${plan.precio.toLocaleString('es-AR')}</div>
+            <ul class="plan-features">
+              <li>${plan.duracion_dias} días de publicación</li>
+              <li>Hasta ${plan.max_fotos} fotos</li>
+            </ul>
+            <a href="/dashboard/login.html" class="btn btn-gold">Contratar</a>
+          </div>
+        `;
+      });
+    });
+  </script>
+</body>
+</html>

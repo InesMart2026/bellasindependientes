@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ECR — Escorts</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/js/supabase.js"></script>
+  <script src="/js/gallery.js" defer></script>
+</head>
+<body>
+  <header class="header">
+    <a href="/" class="header-logo">ECR</a>
+    <nav class="header-nav">
+      <a href="/mujeres.html">Mujeres</a>
+      <a href="/hombres.html">Hombres</a>
+      <a href="/trans.html">Trans</a>
+      <a href="/planes.html">Planes</a>
+      <a href="/dashboard/login.html">Acceder</a>
+    </nav>
+  </header>
+
+  <section class="hero" id="hero">
+    <div class="hero-item">
+      <img src="https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?w=800" alt="" loading="lazy">
+      <div class="hero-overlay">
+        <h1>Encontrá la compañía perfecta</h1>
+      </div>
+    </div>
+    <div class="hero-item">
+      <img src="https://images.unsplash.com/photo-1504257432389-52343af06ae3?w=400" alt="" loading="lazy">
+    </div>
+    <div class="hero-item">
+      <img src="https://images.unsplash.com/photo-1519699047748-de8e457a634e?w=400" alt="" loading="lazy">
+    </div>
+  </section>
+
+  <nav class="categories-nav">
+    <a href="/mujeres.html" class="cat-btn">Mujeres</a>
+    <a href="/hombres.html" class="cat-btn">Hombres</a>
+    <a href="/trans.html" class="cat-btn">Trans</a>
+  </nav>
+
+  <h2 class="section-title">Destacadas</h2>
+  <div class="grid" id="escorts-grid"></div>
+
+  <div id="lightbox" class="lightbox">
+    <button class="lightbox-close" onclick="galleryHelpers.closeLightbox()">×</button>
+    <img src="" alt="Foto">
+  </div>
+
+  <footer class="footer">
+    <p>ECR &copy; 2026 &mdash; Todos los derechos reservados</p>
+  </footer>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      try {
+        const escorts = await galleryHelpers.fetchEscorts();
+        const grid = document.getElementById('escorts-grid');
+
+        for (const escort of escorts.slice(0, 8)) {
+          const portada = await galleryHelpers.fetchPortada(escort.id);
+          grid.appendChild(galleryHelpers.renderCard(escort, portada.url));
+        }
+      } catch (err) {
+        console.error('Error loading escorts:', err);
+      }
+    });
+  </script>
+</body>
+</html>
