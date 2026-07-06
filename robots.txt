@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Disallow: /dashboard/
+Disallow: /supabase/
+
+# REEMPLAZAR https://TUDOMINIO.com por el dominio real al publicar
+Sitemap: https://TUDOMINIO.com/sitemap.xml

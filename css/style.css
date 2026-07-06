@@ -83,12 +83,101 @@ a:hover { color: var(--gold-light); }
   text-align: center;
 }
 
+/* Encabezado editorial de sección (Destacadas / Explorar) */
+.section-head { padding: 3.5rem 2rem 1.5rem; }
+.section-kicker {
+  display: inline-block;
+  font-size: .72rem;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: .5rem;
+}
+.section-head-title {
+  font-family: var(--font-display);
+  font-size: 2rem;
+  line-height: 1.1;
+}
+.section-head-sub {
+  color: var(--text-secondary);
+  font-size: .9rem;
+  margin-top: .4rem;
+}
+
+/* Banda destacada: fondo sutil dorado que la separa del resto */
+.feat {
+  background:
+    radial-gradient(120% 60% at 50% 0%, rgba(212,175,55,.06), transparent 70%);
+  border-bottom: 1px solid var(--border);
+}
+
+/* Cards destacadas: más presencia + marco dorado + corona */
+.grid--feat {
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+}
+.card--feat {
+  outline: 1px solid rgba(212,175,55,.5);
+  outline-offset: -1px;
+  box-shadow: 0 4px 24px rgba(212,175,55,.12);
+}
+.card--feat:hover {
+  box-shadow: 0 10px 40px rgba(212,175,55,.28);
+}
+.card--feat::before {
+  content: "✦ Destacada";
+  position: absolute;
+  top: 1rem; left: 1rem;
+  z-index: 2;
+  background: var(--gold);
+  color: #000;
+  font-size: .68rem;
+  font-weight: 700;
+  letter-spacing: .5px;
+  text-transform: uppercase;
+  padding: .28rem .6rem;
+  border-radius: 3px;
+}
+
 .grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 1.5rem;
   padding: 0 2rem 3rem;
 }
+
+/* Grid de espacios fijos (3 columnas): tarjetas compradas + "Tu Espacio Aquí" */
+.grid--slots { grid-template-columns: repeat(3, 1fr); }
+
+.card--empty {
+  border: 1px dashed rgba(212, 175, 55, .35);
+  background: rgba(212, 175, 55, .03);
+}
+
+.card--empty:hover {
+  border-color: var(--gold);
+  box-shadow: 0 8px 30px rgba(212, 175, 55, .12);
+}
+
+.card-empty-inner {
+  aspect-ratio: 3 / 4;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: .5rem;
+  text-align: center;
+  padding: 1rem;
+}
+
+.card-empty-plus {
+  font-size: 2.5rem;
+  line-height: 1;
+  color: var(--gold);
+  font-weight: 300;
+}
+
+.card-empty-inner h3 { font-size: 1.05rem; font-weight: 600; }
+.card-empty-inner p { color: var(--text-secondary); font-size: .8rem; }
 
 .card {
   position: relative;
@@ -200,6 +289,54 @@ a:hover { color: var(--gold-light); }
 
 .profile-social a:hover { border-color: var(--gold); color: var(--gold); }
 
+/* Tarifa destacada */
+.profile-rate {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding: 1rem 1.25rem;
+  background: var(--bg-card);
+  border: 1px solid var(--gold);
+  border-radius: 8px;
+  margin-bottom: 1.25rem;
+}
+.profile-rate span { color: var(--text-secondary); font-size: .9rem; text-transform: uppercase; letter-spacing: .05em; }
+.profile-rate strong { color: var(--gold); font-size: 1.6rem; font-family: var(--font-display); }
+.profile-rate small { color: var(--text-secondary); font-size: .8rem; font-weight: 400; }
+
+/* Botones de contacto */
+.profile-contact { display: flex; gap: .75rem; flex-wrap: wrap; margin-bottom: 2rem; }
+.profile-contact-btn { flex: 1; min-width: 140px; text-align: center; }
+.profile-contact-btn--ghost {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-primary);
+}
+.profile-contact-btn--ghost:hover { border-color: var(--gold); color: var(--gold); }
+
+/* Ficha de datos */
+.profile-specs { list-style: none; margin: 1rem 0 0; padding: 0; }
+.profile-specs li {
+  display: flex;
+  justify-content: space-between;
+  padding: .6rem 0;
+  border-bottom: 1px solid var(--border);
+  font-size: .95rem;
+}
+.profile-specs li span { color: var(--text-secondary); }
+.profile-specs li strong { color: var(--text-primary); font-weight: 500; }
+
+/* Chips de servicios / idiomas */
+.profile-chips { display: flex; flex-wrap: wrap; gap: .5rem; margin: 1rem 0 1.5rem; }
+.profile-chips .chip {
+  padding: .35rem .9rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  font-size: .82rem;
+  color: var(--text-secondary);
+}
+
 .gallery-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
@@ -236,13 +373,132 @@ a:hover { color: var(--gold-light); }
   font-size: 2rem; cursor: pointer;
 }
 
+/* ===== Footer legal ===== */
 .footer {
   border-top: 1px solid var(--border);
-  padding: 2rem;
-  text-align: center;
   color: var(--text-secondary);
   font-size: .85rem;
+  margin-top: 4rem;
 }
+
+.footer-inner {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 3rem 1.5rem 2rem;
+}
+
+/* Franja 1: links legales */
+.footer-links {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: .5rem 1.5rem;
+  padding-bottom: 2rem;
+  border-bottom: 1px solid var(--border);
+}
+.footer-links a {
+  color: var(--text-secondary);
+  font-size: .8rem;
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  white-space: nowrap;
+}
+.footer-links a:hover { color: var(--gold); }
+
+/* Franja 2: descargo + copyright */
+.footer-disclaimer {
+  padding: 2rem 0;
+  text-align: center;
+  line-height: 1.7;
+}
+.footer-disclaimer p { margin: 0 auto .75rem; max-width: 780px; font-size: .8rem; }
+.footer-brand {
+  color: var(--text-primary);
+  font-family: var(--font-display);
+  font-size: 1rem;
+  margin-top: 1.5rem;
+}
+.footer-legal-line { font-size: .78rem; margin-top: .5rem; }
+
+/* Badges +18 / RTA */
+.footer-badges {
+  display: flex;
+  justify-content: center;
+  gap: .75rem;
+  margin-top: 1.5rem;
+}
+.footer-badge {
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: .35rem .75rem;
+  font-size: .7rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: var(--text-secondary);
+  text-decoration: none;
+}
+a.footer-badge:hover { color: var(--gold); border-color: var(--gold); }
+
+/* Franja 3: banda anti-trata */
+.footer-stop {
+  background: var(--bg-secondary);
+  border-top: 1px solid var(--border);
+}
+.footer-stop-inner {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+.footer-stop-icon {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+}
+.footer-stop-icon svg { display: block; }
+.footer-stop-icon img { display: block; filter: blur(1px); }
+.footer-stop-text { font-size: .82rem; line-height: 1.6; }
+.footer-stop-title {
+  font-family: var(--font-display, "Playfair Display", serif);
+  font-weight: 900;
+  letter-spacing: 1.5px;
+  font-size: 1.15rem;
+  color: #fff;
+  margin: 0 0 .5rem;
+  text-transform: uppercase;
+}
+.footer-stop-text a { color: #E11414; }
+.footer-stop-text strong { color: var(--text-primary); }
+.footer-stop-text a { color: var(--gold); text-decoration: underline; }
+
+@media (max-width: 600px) {
+  .footer-stop-inner { flex-direction: column; text-align: center; }
+  .footer-links { gap: .4rem 1rem; }
+}
+
+/* ===== Páginas legales ===== */
+.legal {
+  max-width: 780px;
+  margin: 0 auto;
+  padding: 3rem 1.5rem;
+}
+.legal h1 {
+  font-family: var(--font-display);
+  font-size: 2rem;
+  margin-bottom: .5rem;
+}
+.legal .legal-updated { color: var(--text-secondary); font-size: .8rem; margin-bottom: 2.5rem; }
+.legal h2 {
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  margin: 2rem 0 .75rem;
+  color: var(--gold);
+}
+.legal p, .legal li { color: var(--text-secondary); line-height: 1.8; margin-bottom: 1rem; }
+.legal ul { padding-left: 1.5rem; }
+.legal strong { color: var(--text-primary); }
 
 .plan-card {
   background: var(--bg-card);
@@ -257,6 +513,59 @@ a:hover { color: var(--gold-light); }
 .plan-price { font-size: 2rem; color: var(--gold); margin: 1rem 0; font-weight: 700; }
 .plan-features { list-style: none; color: var(--text-secondary); margin-bottom: 1.5rem; }
 .plan-features li { padding: .5rem 0; border-bottom: 1px solid var(--border); }
+
+/* ── Grid de paquetes (pay-per-day) ── */
+.plans-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.5rem;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0 2rem 4rem;
+  align-items: stretch;
+}
+
+.plans-grid .plan-card {
+  max-width: none;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.plan-perday { color: var(--text-secondary); font-size: .85rem; margin-top: -.5rem; }
+.plan-save {
+  display: inline-block;
+  margin-bottom: 1rem;
+  background: rgba(212, 175, 55, .12);
+  color: var(--gold);
+  padding: .2rem .6rem;
+  font-size: .75rem;
+  font-weight: 600;
+  border-radius: 2px;
+}
+.plan-card .btn { margin-top: auto; }
+
+/* Paquete recomendado */
+.plan-card--featured {
+  border-color: var(--gold);
+  box-shadow: 0 8px 40px rgba(212, 175, 55, .15);
+}
+.plan-badge-top {
+  position: absolute;
+  top: -.75rem; left: 50%; transform: translateX(-50%);
+  background: var(--gold); color: #000;
+  padding: .25rem .9rem;
+  font-size: .7rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 1px;
+  border-radius: 2px; white-space: nowrap;
+}
+
+@media (max-width: 900px) {
+  .plans-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 520px) {
+  .plans-grid { grid-template-columns: 1fr; }
+}
 
 .btn {
   padding: .75rem 2rem;
@@ -338,4 +647,5 @@ a:hover { color: var(--gold-light); }
   .header-nav { gap: 1rem; flex-wrap: wrap; justify-content: center; }
   .profile-content { grid-template-columns: 1fr; }
   .grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); padding: 0 1rem 2rem; gap: 1rem; }
+  .grid--slots { grid-template-columns: repeat(2, 1fr); }
 }

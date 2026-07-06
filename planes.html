@@ -3,58 +3,119 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Planes — ECR</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22><rect width=%2232%22 height=%2232%22 rx=%226%22 fill=%22%23000%22/><text x=%2216%22 y=%2222%22 font-family=%22Georgia,serif%22 font-size=%2220%22 font-weight=%22700%22 fill=%22%23D4AF37%22 text-anchor=%22middle%22>E</text></svg>">
+  <meta name="RATING" content="RTA-5042-1996-1400-1577-RTA">
+  <title>Planes de publicación | Publicá tu perfil — Bellas Escort Tucumán</title>
+  <meta name="description" content="Publicá tu perfil de acompañante en Tucumán. Planes desde 1 día. Posición destacada, fotos y contacto directo.">
+  <!-- REEMPLAZAR https://TUDOMINIO.com por el dominio real al publicar -->
+  <link rel="canonical" href="https://TUDOMINIO.com/planes.html">
   <link rel="stylesheet" href="/css/style.css">
+  <script src="/js/legal-notices.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="/js/supabase.js" defer></script>
 </head>
 <body>
   <header class="header">
-    <a href="/" class="header-logo">ECR</a>
+    <a href="/" class="header-logo">Bellas Escort</a>
     <nav class="header-nav">
       <a href="/mujeres.html">Mujeres</a>
       <a href="/hombres.html">Hombres</a>
       <a href="/trans.html">Trans</a>
+      <a href="/masajistas.html">Masajistas</a>
       <a href="/planes.html">Planes</a>
       <a href="/dashboard/login.html">Acceder</a>
     </nav>
   </header>
 
-  <h2 class="section-title">Planes de Suscripción</h2>
-  <p style="text-align:center;color:#888;max-width:600px;margin:0 auto 2rem;">
-    Publicá tu perfil y llegá a más clientes. Elegí el plan que mejor se adapte a vos.
+  <h2 class="section-title">Activá tu perfil</h2>
+  <p style="text-align:center;color:var(--text-secondary);max-width:640px;margin:0 auto 2.5rem;">
+    Tu slot se activa apenas se acredita el pago y queda visible por los días que elijas.
+    Cuantos más días contratás, menor es el precio por día.
   </p>
 
-  <div style="display:flex;justify-content:center;gap:2rem;padding:0 2rem 3rem;flex-wrap:wrap;" id="plans-container"></div>
+  <div class="plans-grid" id="plans-container"></div>
 
-  <footer class="footer">
-    <p>ECR &copy; 2026 &mdash; Todos los derechos reservados</p>
-  </footer>
+  <div id="site-footer"></div>
+  <script src="/js/footer.js" defer></script>
 
   <script>
+    const fmt = n => '$' + Number(n).toLocaleString('es-AR');
+
     document.addEventListener('DOMContentLoaded', async () => {
-      const { data: plans, error } = await window.supabaseClient
-        .from('plans')
-        .select('*')
-        .order('precio', { ascending: true });
-
-      if (error) return;
-
       const container = document.getElementById('plans-container');
-      plans.forEach(plan => {
-        container.innerHTML += `
-          <div class="plan-card">
-            <h3>${plan.nombre}</h3>
-            <div class="plan-price">$${plan.precio.toLocaleString('es-AR')}</div>
-            <ul class="plan-features">
-              <li>${plan.duracion_dias} días de publicación</li>
-              <li>Hasta ${plan.max_fotos} fotos</li>
-            </ul>
-            <a href="/dashboard/login.html" class="btn btn-gold">Contratar</a>
-          </div>
+
+      const { data: packages, error } = await window.supabaseClient
+        .from('packages')
+        .select('*')
+        .eq('activo', true)
+        .order('orden', { ascending: true });
+
+      if (error || !packages?.length) {
+        container.innerHTML =
+          '<p style="grid-column:1/-1;text-align:center;color:var(--text-secondary);">' +
+          'No se pudieron cargar los planes. Intentá de nuevo en un momento.</p>';
+        return;
+      }
+
+      const base = packages[0]?.precio_dia || 15000; // precio/día de 1 día
+      const recomendado = packages.reduce((a, b) => (b.dias > a.dias ? b : a), packages[0]);
+
+      packages.forEach(pkg => {
+        const ahorro = Math.round((1 - pkg.precio_dia / base) * 100);
+        const featured = pkg.id === recomendado.id;
+        const card = document.createElement('div');
+        card.className = 'plan-card' + (featured ? ' plan-card--featured' : '');
+        card.innerHTML = `
+          ${featured ? '<span class="plan-badge-top">Más elegido</span>' : ''}
+          <h3>${pkg.nombre}</h3>
+          <div class="plan-price">${fmt(pkg.precio_total)}</div>
+          <p class="plan-perday">${fmt(pkg.precio_dia)} por día</p>
+          ${ahorro > 0 ? `<span class="plan-save">Ahorrás ${ahorro}%</span>` : '<span class="plan-save" style="visibility:hidden">.</span>'}
+          <ul class="plan-features">
+            <li>${pkg.dias} ${pkg.dias === 1 ? 'día' : 'días'} de visibilidad</li>
+            <li>${pkg.destacada ? 'Posición destacada en portada' : 'Perfil visible en el listado'}</li>
+            <li>Se activa al acreditarse el pago</li>
+          </ul>
+          <button class="btn btn-gold" data-package="${pkg.id}">Activar</button>
         `;
+        container.appendChild(card);
+      });
+
+      container.addEventListener('click', async (e) => {
+        const btn = e.target.closest('button[data-package]');
+        if (!btn) return;
+        await iniciarPago(btn.dataset.package, btn);
       });
     });
+
+    async function iniciarPago(packageId, btn) {
+      // Sin sesión → mandamos a login y volvemos a planes.
+      const { data: { session } } = await window.supabaseClient.auth.getSession();
+      if (!session) {
+        window.location.href = '/dashboard/login.html?next=/planes.html';
+        return;
+      }
+
+      btn.disabled = true;
+      const original = btn.textContent;
+      btn.textContent = 'Redirigiendo...';
+
+      try {
+        // La Edge Function crea la preferencia de MercadoPago y devuelve
+        // el init_point (URL del checkout). Nunca activamos el slot acá.
+        const { data, error } = await window.supabaseClient.functions.invoke(
+          'crear-pago',
+          { body: { package_id: packageId } }
+        );
+        if (error || !data?.init_point) throw error || new Error('Sin init_point');
+        window.location.href = data.init_point;
+      } catch (err) {
+        console.error('Error al iniciar el pago:', err);
+        btn.disabled = false;
+        btn.textContent = original;
+        alert('No se pudo iniciar el pago. Verificá que tengas un perfil creado e intentá de nuevo.');
+      }
+    }
   </script>
 </body>
 </html>

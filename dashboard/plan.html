@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Mi Plan — ECR</title>
+  <title>Mi Plan — Bellas Escort</title>
   <link rel="stylesheet" href="/css/style.css">
   <link rel="stylesheet" href="/css/dashboard.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -13,11 +13,12 @@
 <body>
   <div class="dashboard-layout">
     <aside class="dashboard-sidebar">
-      <a href="/dashboard/" class="header-logo">ECR</a>
+      <a href="/dashboard/" class="header-logo">Bellas Escort</a>
       <ul class="dashboard-nav">
         <li><a href="/dashboard/">Panel</a></li>
         <li><a href="/dashboard/fotos.html">Mis Fotos</a></li>
         <li><a href="/dashboard/perfil.html">Mi Perfil</a></li>
+        <li><a href="/dashboard/verificacion.html">Verificación</a></li>
         <li><a href="/dashboard/plan.html" class="active">Mi Plan</a></li>
         <li><a href="#" onclick="authHelpers.logout()">Cerrar sesión</a></li>
       </ul>
@@ -28,8 +29,15 @@
         <h2>Mi Plan</h2>
       </div>
 
+      <div id="verif-gate"></div>
       <div id="plan-status"></div>
-      <div id="plans-offer" style="display:flex;gap:2rem;flex-wrap:wrap;margin-top:2rem;"></div>
+
+      <h3 style="margin:2.5rem 0 1rem;">Renová o extendé tu visibilidad</h3>
+      <p style="color:var(--text-secondary);font-size:.9rem;margin-bottom:1.5rem;">
+        Comprás días de visibilidad. Si tu perfil sigue activo, los días se
+        suman al vencimiento actual.
+      </p>
+      <div class="plans-grid" id="packages-offer"></div>
     </main>
   </div>
 
@@ -40,49 +48,108 @@
 
       const { data: escort } = await window.supabaseClient
         .from('escorts')
-        .select('id')
+        .select('id, activa, visible_hasta, estado_verificacion')
         .eq('user_id', user.id)
         .single();
 
       if (!escort) { window.location.href = '/dashboard/perfil.html'; return; }
 
-      const { data: sub } = await window.supabaseClient
-        .from('subscriptions')
-        .select('*, plans(*)')
-        .eq('escort_id', escort.id)
-        .gte('fin', new Date().toISOString().split('T')[0])
-        .maybeSingle();
+      // ── Gate de verificación ─────────────────────────────────
+      // Sin identidad verificada no se puede contratar (barrera legal
+      // contra publicación de menores). El gate se aplica en el server
+      // igual, pero acá evitamos el intento y guiamos a la escort.
+      const verificada = escort.estado_verificacion === 'verificado';
+      if (!verificada) {
+        const gate = document.getElementById('verif-gate');
+        const enProceso = escort.estado_verificacion === 'en_revision';
+        gate.innerHTML = `
+          <div class="plan-card" style="text-align:left;border-color:var(--gold);margin-bottom:1.5rem;">
+            <p style="color:var(--gold);font-size:1.1rem;margin-bottom:.5rem;">Verificá tu identidad primero</p>
+            <p style="color:var(--text-secondary);font-size:.9rem;margin-bottom:1rem;">
+              ${enProceso
+                ? 'Tu verificación está en proceso. Cuando se apruebe vas a poder contratar un paquete.'
+                : 'Para publicar tenés que verificar tu identidad (DNI + selfie). Es un requisito legal y se hace una sola vez.'}
+            </p>
+            <a href="/dashboard/verificacion.html" class="btn btn-gold" style="display:inline-block;">
+              ${enProceso ? 'Ver estado de verificación' : 'Verificar identidad'}
+            </a>
+          </div>`;
+      }
 
+      // ── Estado del slot ──────────────────────────────────────
       const statusDiv = document.getElementById('plan-status');
-      if (sub && sub.paga) {
+      const ahora = new Date();
+      const vence = escort.visible_hasta ? new Date(escort.visible_hasta) : null;
+      const vigente = escort.activa && vence && vence >= ahora;
+
+      if (vigente) {
+        const diasRest = Math.ceil((vence - ahora) / 86400000);
+        statusDiv.innerHTML = `
+          <div class="plan-card plan-card--featured" style="text-align:left;">
+            <p style="color:var(--gold);font-size:1.1rem;margin-bottom:.5rem;">● Perfil activo</p>
+            <p style="font-size:2rem;font-weight:700;">${diasRest} ${diasRest === 1 ? 'día' : 'días'} <small style="font-size:.9rem;color:var(--text-secondary);font-weight:400;">restantes</small></p>
+            <p style="color:var(--text-secondary);font-size:.85rem;margin-top:.5rem;">
+              Vence el ${vence.toLocaleDateString('es-AR')}
+            </p>
+          </div>`;
+      } else if (vence) {
+        statusDiv.innerHTML = `
+          <div class="plan-card" style="text-align:left;border-color:#a33;">
+            <p style="color:#e66;font-size:1.1rem;margin-bottom:.5rem;">● Perfil vencido</p>
+            <p style="color:var(--text-secondary);font-size:.9rem;">
+              Venció el ${vence.toLocaleDateString('es-AR')}. Renová para volver a aparecer en el listado.
+            </p>
+          </div>`;
+      } else {
         statusDiv.innerHTML = `
           <div class="plan-card" style="text-align:left;">
-            <h3>${sub.plans.nombre}</h3>
-            <p style="color:var(--gold);margin:.5rem 0;">✓ Activo</p>
-            <p style="color:var(--text-secondary);font-size:.85rem;">
-              Vigente hasta: ${new Date(sub.fin).toLocaleDateString('es-AR')}
+            <p style="font-size:1.1rem;margin-bottom:.5rem;">Perfil sin activar</p>
+            <p style="color:var(--text-secondary);font-size:.9rem;">
+              Elegí un paquete para publicar tu perfil y aparecer en el listado.
             </p>
-          </div>
-        `;
-      } else {
-        statusDiv.innerHTML = '<p style="color:var(--text-secondary);">No tenés un plan activo. Elegí uno para publicar tu perfil.</p>';
-
-        const { data: plans } = await window.supabaseClient.from('plans').select('*').order('precio');
-        const offerDiv = document.getElementById('plans-offer');
-        plans.forEach(plan => {
-          offerDiv.innerHTML += `
-            <div class="plan-card">
-              <h3>${plan.nombre}</h3>
-              <div class="plan-price">$${plan.precio.toLocaleString('es-AR')}</div>
-              <ul class="plan-features">
-                <li>${plan.duracion_dias} días</li>
-                <li>Hasta ${plan.max_fotos} fotos</li>
-              </ul>
-              <button class="btn btn-gold" onclick="alert('Mercado Pago próximamente. Contactanos para activar tu plan.')">Contratar</button>
-            </div>
-          `;
-        });
+          </div>`;
       }
+
+      // ── Paquetes disponibles ─────────────────────────────────
+      const { data: packages } = await window.supabaseClient
+        .from('packages')
+        .select('*')
+        .eq('activo', true)
+        .order('orden');
+
+      const offer = document.getElementById('packages-offer');
+      const base = 15000; // precio/día de referencia (paquete de 1 día)
+      (packages || []).forEach(pkg => {
+        const ahorro = Math.round((1 - pkg.precio_dia / base) * 100);
+        offer.innerHTML += `
+          <div class="plan-card ${pkg.destacada ? 'plan-card--featured' : ''}">
+            ${pkg.destacada ? '<span class="plan-badge-top">Recomendado</span>' : ''}
+            <h3>${pkg.nombre}</h3>
+            <div class="plan-price">$${Number(pkg.precio_total).toLocaleString('es-AR')}</div>
+            <p class="plan-perday">$${Number(pkg.precio_dia).toLocaleString('es-AR')} / día</p>
+            ${ahorro > 0 ? `<p class="plan-save">Ahorrás ${ahorro}%</p>` : ''}
+            <button class="btn btn-gold" data-pkg="${pkg.id}">Contratar</button>
+          </div>`;
+      });
+
+      offer.addEventListener('click', async (e) => {
+        const btn = e.target.closest('button[data-pkg]');
+        if (!btn) return;
+        if (!verificada) { window.location.href = '/dashboard/verificacion.html'; return; }
+        btn.disabled = true;
+        btn.textContent = 'Redirigiendo...';
+        try {
+          const { data, error } = await window.supabaseClient.functions.invoke('crear-pago', {
+            body: { package_id: btn.dataset.pkg }
+          });
+          if (error || !data?.init_point) throw error || new Error('sin init_point');
+          window.location.href = data.init_point;
+        } catch (err) {
+          alert('No se pudo iniciar el pago. Intentá de nuevo en un momento.');
+          btn.disabled = false;
+          btn.textContent = 'Contratar';
+        }
+      });
     });
   </script>
 </body>

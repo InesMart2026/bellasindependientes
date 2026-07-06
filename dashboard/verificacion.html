@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Verificación — Bellas Escort</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="/css/dashboard.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/js/supabase.js"></script>
+  <script src="/js/auth.js" defer></script>
+</head>
+<body>
+  <div class="dashboard-layout">
+    <aside class="dashboard-sidebar">
+      <a href="/dashboard/" class="header-logo">Bellas Escort</a>
+      <ul class="dashboard-nav">
+        <li><a href="/dashboard/">Panel</a></li>
+        <li><a href="/dashboard/fotos.html">Mis Fotos</a></li>
+        <li><a href="/dashboard/perfil.html">Mi Perfil</a></li>
+        <li><a href="/dashboard/verificacion.html" class="active">Verificación</a></li>
+        <li><a href="/dashboard/plan.html">Mi Plan</a></li>
+        <li><a href="#" onclick="authHelpers.logout()">Cerrar sesión</a></li>
+      </ul>
+    </aside>
+
+    <main class="dashboard-main">
+      <div class="dashboard-header">
+        <h2>Verificación de identidad</h2>
+      </div>
+
+      <div id="verif-banner"></div>
+
+      <form id="legal-form" style="max-width:640px;">
+        <p style="color:var(--text-secondary);font-size:.9rem;margin-bottom:1.5rem;">
+          Para publicar necesitás verificar tu identidad. Tus datos personales
+          se guardan <strong>encriptados</strong> y solo son accesibles por la
+          administración. No se muestran en tu perfil público.
+        </p>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+          <div class="form-group">
+            <label>Nombre real</label>
+            <input type="text" id="nombre_real" required>
+          </div>
+          <div class="form-group">
+            <label>Apellido</label>
+            <input type="text" id="apellido" required>
+          </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+          <div class="form-group">
+            <label>DNI</label>
+            <input type="text" id="dni" required inputmode="numeric" placeholder="Sin puntos">
+          </div>
+          <div class="form-group">
+            <label>Celular de publicación</label>
+            <input type="text" id="celular" required placeholder="Ej: 5491112345678">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Dirección real</label>
+          <input type="text" id="direccion" required placeholder="Calle, número, piso/depto">
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+          <div class="form-group">
+            <label>Provincia</label>
+            <input type="text" id="provincia" required placeholder="Ej: Tucumán">
+          </div>
+          <div class="form-group">
+            <label>Localidad</label>
+            <input type="text" id="localidad" required placeholder="Ej: San Miguel de Tucumán">
+          </div>
+        </div>
+
+        <div class="form-group" style="margin-top:1rem;">
+          <label style="display:flex;gap:.6rem;align-items:flex-start;cursor:pointer;font-weight:400;">
+            <input type="checkbox" id="acuerdo" required style="margin-top:.25rem;width:auto;">
+            <span style="font-size:.9rem;color:var(--text-secondary);">
+              Declaro bajo juramento que soy mayor de 18 años, que los datos y
+              las imágenes que publico son propios y verídicos, y que soy la
+              única responsable del contenido de mi anuncio. Acepto los términos
+              y condiciones del sitio.
+            </span>
+          </label>
+        </div>
+
+        <button type="submit" class="btn btn-gold" id="save-btn">Guardar datos</button>
+      </form>
+
+      <div id="kyc-step" style="display:none;max-width:640px;margin-top:2rem;">
+        <hr style="border-color:var(--border);margin:0 0 1.5rem;">
+        <h3 style="margin-bottom:.5rem;">Verificación biométrica</h3>
+        <p style="color:var(--text-secondary);font-size:.9rem;margin-bottom:1.25rem;">
+          Vas a sacar una foto de tu DNI (frente y dorso) y una selfie. El
+          sistema compara automáticamente que seas la misma persona del documento.
+          Todo el proceso lo maneja nuestro proveedor de verificación de forma segura.
+        </p>
+        <button class="btn btn-gold" id="kyc-btn">Verificar identidad ahora</button>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      const user = await authHelpers.requireAuth();
+      if (!user) return;
+
+      const bannerEl = document.getElementById('verif-banner');
+      const formEl   = document.getElementById('legal-form');
+      const kycStep  = document.getElementById('kyc-step');
+
+      // 1. Cargar perfil (datos legales previos + estado)
+      const { data: profile } = await window.supabaseClient
+        .rpc('get_my_profile').maybeSingle();
+
+      if (!profile) {
+        bannerEl.innerHTML = `
+          <div class="plan-card" style="text-align:left;">
+            <p>Primero creá tu perfil público con nombre y slug.</p>
+            <a href="/dashboard/perfil.html" class="btn btn-gold" style="margin-top:.75rem;display:inline-block;">Ir a Mi Perfil</a>
+          </div>`;
+        formEl.style.display = 'none';
+        return;
+      }
+
+      // Estado de verificación → banner
+      const estado = profile.estado_verificacion;
+      renderBanner(estado);
+
+      if (estado === 'verificado') {
+        formEl.style.display = 'none';
+        return;
+      }
+
+      // Pre-cargar provincia/localidad/acuerdo (los sensibles NO se re-exponen)
+      document.getElementById('provincia').value = profile.provincia || '';
+      document.getElementById('localidad').value = profile.localidad || '';
+      document.getElementById('acuerdo').checked  = !!profile.acuerdo_legal;
+
+      // Si ya aceptó el acuerdo, mostrar directamente el paso de KYC
+      if (profile.acuerdo_legal) kycStep.style.display = 'block';
+
+      // 2. Guardar datos legales
+      formEl.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const btn = document.getElementById('save-btn');
+        const val = (id) => document.getElementById(id).value.trim() || null;
+
+        if (!document.getElementById('acuerdo').checked) {
+          alert('Tenés que aceptar el acuerdo legal para continuar.');
+          return;
+        }
+
+        btn.disabled = true;
+        btn.textContent = 'Guardando...';
+
+        const payload = {
+          nombre_real: val('nombre_real'),
+          apellido:    val('apellido'),
+          dni:         val('dni'),
+          celular:     val('celular'),
+          direccion:   val('direccion'),
+          provincia:   val('provincia'),
+          localidad:   val('localidad'),
+          acuerdo_legal: true,
+          acuerdo_legal_at: new Date().toISOString(),
+        };
+
+        const { error } = await window.supabaseClient
+          .from('escorts').update(payload).eq('user_id', user.id);
+
+        if (error) {
+          alert('No se pudieron guardar los datos. Revisá que estén completos.');
+          btn.disabled = false;
+          btn.textContent = 'Guardar datos';
+          return;
+        }
+
+        btn.disabled = false;
+        btn.textContent = 'Datos guardados ✓';
+        kycStep.style.display = 'block';
+        kycStep.scrollIntoView({ behavior: 'smooth' });
+      });
+
+      // 3. Iniciar verificación biométrica (Didit)
+      document.getElementById('kyc-btn').addEventListener('click', async () => {
+        const btn = document.getElementById('kyc-btn');
+        btn.disabled = true;
+        btn.textContent = 'Abriendo verificación...';
+        try {
+          const { data, error } = await window.supabaseClient.functions.invoke('crear-kyc', { body: {} });
+          if (error || !data?.url) throw error || new Error('sin url');
+          window.location.href = data.url;
+        } catch (err) {
+          alert('No se pudo iniciar la verificación. Intentá de nuevo en un momento.');
+          btn.disabled = false;
+          btn.textContent = 'Verificar identidad ahora';
+        }
+      });
+
+      function renderBanner(estado) {
+        const map = {
+          verificado: ['var(--gold)', '✓ Identidad verificada', 'Tu perfil puede publicarse.'],
+          en_revision: ['#e6b800', '● Verificación en proceso', 'Estamos validando tu identidad. Puede tardar unos minutos.'],
+          rechazado: ['#e66', '● Verificación rechazada', 'No pudimos validar tu identidad. Revisá tus datos y volvé a intentar.'],
+          pendiente: [null, null, null],
+        };
+        const [color, title, text] = map[estado] || map.pendiente;
+        if (!title) { bannerEl.innerHTML = ''; return; }
+        bannerEl.innerHTML = `
+          <div class="plan-card" style="text-align:left;margin-bottom:1.5rem;${color ? `border-color:${color};` : ''}">
+            <p style="color:${color};font-size:1.05rem;margin-bottom:.35rem;">${title}</p>
+            <p style="color:var(--text-secondary);font-size:.9rem;">${text}</p>
+          </div>`;
+      }
+    });
+  </script>
+</body>
+</html>

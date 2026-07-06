@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dashboard — ECR</title>
+  <title>Dashboard — Bellas Escort</title>
   <link rel="stylesheet" href="/css/style.css">
   <link rel="stylesheet" href="/css/dashboard.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -15,11 +15,12 @@
 <body>
   <div class="dashboard-layout">
     <aside class="dashboard-sidebar">
-      <a href="/dashboard/" class="header-logo">ECR</a>
+      <a href="/dashboard/" class="header-logo">Bellas Escort</a>
       <ul class="dashboard-nav">
         <li><a href="/dashboard/" class="active">Panel</a></li>
         <li><a href="/dashboard/fotos.html">Mis Fotos</a></li>
         <li><a href="/dashboard/perfil.html">Mi Perfil</a></li>
+        <li><a href="/dashboard/verificacion.html">Verificación</a></li>
         <li><a href="/dashboard/plan.html">Mi Plan</a></li>
         <li><a href="#" onclick="authHelpers.logout()">Cerrar sesión</a></li>
       </ul>
@@ -36,10 +37,13 @@
           <p style="font-size:2rem;color:var(--gold);font-weight:700;" id="photo-count">—</p>
         </div>
         <div class="plan-card" style="text-align:left;">
-          <p style="color:var(--text-secondary);font-size:.85rem;">Plan actual</p>
-          <p style="font-size:1.2rem;" id="current-plan">—</p>
+          <p style="color:var(--text-secondary);font-size:.85rem;">Estado del perfil</p>
+          <p style="font-size:1.2rem;" id="current-status">—</p>
+          <p style="color:var(--text-secondary);font-size:.8rem;margin-top:.35rem;" id="status-detail"></p>
         </div>
       </div>
+
+      <div id="status-cta"></div>
     </main>
   </div>
 
@@ -66,14 +70,60 @@
 
       document.getElementById('photo-count').textContent = count || 0;
 
-      const { data: sub } = await window.supabaseClient
-        .from('subscriptions')
-        .select('*, plans(*)')
-        .eq('escort_id', escort.id)
-        .gte('fin', new Date().toISOString().split('T')[0])
-        .maybeSingle();
+      // Estado según el modelo pay-per-day (activa + visible_hasta).
+      const ahora = new Date();
+      const vence = escort.visible_hasta ? new Date(escort.visible_hasta) : null;
+      const vigente = escort.activa && vence && vence >= ahora;
 
-      document.getElementById('current-plan').textContent = sub ? sub.plans.nombre : 'Sin plan activo';
+      const statusEl = document.getElementById('current-status');
+      const detailEl = document.getElementById('status-detail');
+      const ctaEl = document.getElementById('status-cta');
+
+      if (vigente) {
+        const diasRest = Math.ceil((vence - ahora) / 86400000);
+        statusEl.innerHTML = '<span style="color:var(--gold);">● Activo</span>';
+        detailEl.textContent = `${diasRest} ${diasRest === 1 ? 'día' : 'días'} · vence el ${vence.toLocaleDateString('es-AR')}`;
+        if (diasRest <= 3) {
+          ctaEl.innerHTML = `
+            <div class="plan-card" style="text-align:left;margin-top:1.5rem;border-color:var(--gold);">
+              <p>Tu perfil vence pronto. Renová para no salir del listado.</p>
+              <a href="/dashboard/plan.html" class="btn btn-gold" style="margin-top:.75rem;display:inline-block;">Renovar</a>
+            </div>`;
+        }
+      } else if (vence) {
+        statusEl.innerHTML = '<span style="color:#e66;">● Vencido</span>';
+        detailEl.textContent = `Venció el ${vence.toLocaleDateString('es-AR')}`;
+        ctaEl.innerHTML = `
+          <div class="plan-card" style="text-align:left;margin-top:1.5rem;">
+            <p>Tu perfil no aparece en el listado. Renová para reactivarlo.</p>
+            <a href="/dashboard/plan.html" class="btn btn-gold" style="margin-top:.75rem;display:inline-block;">Renovar</a>
+          </div>`;
+      } else {
+        statusEl.innerHTML = '<span style="color:var(--text-secondary);">Sin activar</span>';
+        detailEl.textContent = 'Todavía no publicaste tu perfil';
+
+        // El pago está gateado por la verificación de identidad: si todavía
+        // no está verificada, el paso #1 es verificar, no activar.
+        const verificada = escort.estado_verificacion === 'verificado';
+        if (verificada) {
+          ctaEl.innerHTML = `
+            <div class="plan-card" style="text-align:left;margin-top:1.5rem;">
+              <p>Elegí un paquete para publicar tu perfil y aparecer en el listado.</p>
+              <a href="/dashboard/plan.html" class="btn btn-gold" style="margin-top:.75rem;display:inline-block;">Activar perfil</a>
+            </div>`;
+        } else {
+          const enProceso = escort.estado_verificacion === 'en_revision';
+          ctaEl.innerHTML = `
+            <div class="plan-card" style="text-align:left;margin-top:1.5rem;border-color:var(--gold);">
+              <p>${enProceso
+                ? 'Tu verificación de identidad está en proceso. Cuando se apruebe vas a poder activar tu perfil.'
+                : 'Antes de publicar, verificá tu identidad (DNI + selfie). Es un requisito legal y se hace una sola vez.'}</p>
+              <a href="/dashboard/verificacion.html" class="btn btn-gold" style="margin-top:.75rem;display:inline-block;">
+                ${enProceso ? 'Ver estado' : 'Verificar identidad'}
+              </a>
+            </div>`;
+        }
+      }
     });
   </script>
 </body>

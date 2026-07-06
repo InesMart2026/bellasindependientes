@@ -3,19 +3,32 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Hombres — ECR</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22><rect width=%2232%22 height=%2232%22 rx=%226%22 fill=%22%23000%22/><text x=%2216%22 y=%2222%22 font-family=%22Georgia,serif%22 font-size=%2220%22 font-weight=%22700%22 fill=%22%23D4AF37%22 text-anchor=%22middle%22>E</text></svg>">
+  <meta name="RATING" content="RTA-5042-1996-1400-1577-RTA">
+  <title>Escorts hombres en Tucumán | Acompañantes +18 — Bellas Escort</title>
+  <meta name="description" content="Escorts y acompañantes hombres en Tucumán. Perfiles verificados con fotos reales. Contactos +18 cerca tuyo.">
+  <!-- REEMPLAZAR https://TUDOMINIO.com por el dominio real al publicar -->
+  <link rel="canonical" href="https://TUDOMINIO.com/hombres.html">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Bellas Escort">
+  <meta property="og:title" content="Escorts hombres en Tucumán — Bellas Escort">
+  <meta property="og:description" content="Escorts y acompañantes hombres en Tucumán. Perfiles verificados con fotos reales.">
+  <meta property="og:url" content="https://TUDOMINIO.com/hombres.html">
+  <meta name="twitter:card" content="summary_large_image">
   <link rel="stylesheet" href="/css/style.css">
+  <script src="/js/legal-notices.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="/js/supabase.js"></script>
   <script src="/js/gallery.js" defer></script>
 </head>
 <body>
   <header class="header">
-    <a href="/" class="header-logo">ECR</a>
+    <a href="/" class="header-logo">Bellas Escort</a>
     <nav class="header-nav">
       <a href="/mujeres.html">Mujeres</a>
       <a href="/hombres.html">Hombres</a>
       <a href="/trans.html">Trans</a>
+      <a href="/masajistas.html">Masajistas</a>
       <a href="/planes.html">Planes</a>
       <a href="/dashboard/login.html">Acceder</a>
     </nav>
@@ -43,30 +56,48 @@
     </div>
   </div>
 
-  <div class="grid" id="escorts-grid"></div>
+  <div class="grid grid--slots" id="escorts-grid"></div>
 
   <div id="lightbox" class="lightbox">
     <button class="lightbox-close" onclick="galleryHelpers.closeLightbox()">×</button>
     <img src="" alt="Foto">
   </div>
 
-  <footer class="footer">
-    <p>ECR &copy; 2026 &mdash; Todos los derechos reservados</p>
-  </footer>
+  <div id="site-footer"></div>
+  <script src="/js/footer.js" defer></script>
 
   <script>
     document.addEventListener('DOMContentLoaded', async () => {
       try {
-        const escorts = await galleryHelpers.fetchEscorts('hombres');
+        // Si Supabase no responde, seguimos con lista vacía: el grid muestra
+        // igual los 12 espacios "Tu Espacio Aquí".
+        let escorts = [];
+        try {
+          escorts = await galleryHelpers.fetchEscorts('hombres') || [];
+        } catch (e) {
+          console.warn('No se pudieron cargar escorts, mostrando grid vacío:', e);
+        }
+
+        const grid = document.getElementById('escorts-grid');
 
         async function applyFilters() {
-          const filtered = galleryHelpers.filterEscorts(escorts, {
-            search: document.getElementById('filter-search').value,
-            edadMin: document.getElementById('filter-edad-min').value,
-            edadMax: document.getElementById('filter-edad-max').value,
-            sort: document.getElementById('filter-sort').value
-          });
-          await galleryHelpers.renderGrid(filtered, 'escorts-grid');
+          const search = document.getElementById('filter-search').value;
+          const edadMin = document.getElementById('filter-edad-min').value;
+          const edadMax = document.getElementById('filter-edad-max').value;
+          const sort = document.getElementById('filter-sort').value;
+          const hayFiltros = search || edadMin || edadMax || sort === 'nombre';
+
+          const filtered = galleryHelpers.filterEscorts(escorts, { search, edadMin, edadMax, sort });
+
+          // Sin filtros: grid de 12 slots con "Tu Espacio Aquí" en los vacíos.
+          // Con filtros: solo los resultados que coinciden.
+          if (hayFiltros) {
+            grid.classList.remove('grid--slots');
+            await galleryHelpers.renderGrid(filtered, 'escorts-grid');
+          } else {
+            grid.classList.add('grid--slots');
+            await galleryHelpers.renderSlots(filtered, 'escorts-grid', 12);
+          }
         }
 
         document.getElementById('filter-search').addEventListener('input', applyFilters);

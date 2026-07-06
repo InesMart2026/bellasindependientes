@@ -1,10 +1,24 @@
 window.galleryHelpers = {
+  // Escapa texto controlado por el usuario antes de meterlo en innerHTML.
+  // El nombre/ubicación de una escort es contenido no confiable: sin esto,
+  // "<img src=x onerror=...>" en el nombre ejecuta JS en cada visitante.
+  escapeHtml(str) {
+    return String(str ?? '').replace(/[&<>"']/g, (c) => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+    }[c]));
+  },
+
   async fetchEscorts(categoria = null) {
+    // Solo perfiles pagos y vigentes. Destacadas primero (compraron posición),
+    // luego por vencimiento más lejano. La RLS ya filtra visible_hasta, pero
+    // lo repetimos acá para controlar el orden del grid.
     let query = window.supabaseClient
       .from('escorts')
       .select('*')
       .eq('activa', true)
-      .order('created_at', { ascending: false });
+      .gte('visible_hasta', new Date().toISOString())
+      .order('destacada', { ascending: false })
+      .order('visible_hasta', { ascending: false });
 
     if (categoria) query = query.eq('categoria', categoria);
 
@@ -38,20 +52,37 @@ window.galleryHelpers = {
       .eq('escort_id', escortId)
       .eq('es_portada', true)
       .maybeSingle();
-    if (error) return { url: 'https://via.placeholder.com/600x800?text=Sin+foto' };
-    return data || { url: 'https://via.placeholder.com/600x800?text=Sin+foto' };
+    if (error) return { url: '/img/sin-foto.svg' };
+    return data || { url: '/img/sin-foto.svg' };
   },
 
   renderCard(escort, portadaUrl) {
+    const esc = this.escapeHtml;
     const div = document.createElement('a');
     div.className = 'card';
-    div.href = `/perfil.html?slug=${escort.slug}`;
+    // slug va en un atributo URL: encodeURIComponent evita romper el href / inyectar.
+    div.href = `/perfil.html?slug=${encodeURIComponent(escort.slug)}`;
+    const edad = Number.isInteger(escort.edad) ? ', ' + escort.edad : '';
     div.innerHTML = `
-      <img class="card-img" src="${portadaUrl}" alt="${escort.nombre}" loading="lazy">
-      <span class="card-badge">${escort.categoria}</span>
+      <img class="card-img" src="${esc(portadaUrl)}" alt="${esc(escort.nombre)}" loading="lazy">
+      <span class="card-badge">${esc(escort.categoria)}</span>
       <div class="card-body">
-        <h3>${escort.nombre}${escort.edad ? ', ' + escort.edad : ''}</h3>
-        <p>${escort.ubicacion || ''}</p>
+        <h3>${esc(escort.nombre)}${edad}</h3>
+        <p>${esc(escort.ubicacion || '')}</p>
+      </div>
+    `;
+    return div;
+  },
+
+  renderEmptyCard() {
+    const div = document.createElement('a');
+    div.className = 'card card--empty';
+    div.href = '/planes.html';
+    div.innerHTML = `
+      <div class="card-empty-inner">
+        <span class="card-empty-plus">+</span>
+        <h3>Tu Espacio Aquí</h3>
+        <p>Publicá tu perfil</p>
       </div>
     `;
     return div;
@@ -126,6 +157,25 @@ window.galleryHelpers = {
     for (const escort of escorts) {
       const portada = await this.fetchPortada(escort.id);
       grid.appendChild(this.renderCard(escort, portada.url));
+    }
+    grid.classList.remove('filtering');
+  },
+
+  async renderSlots(escorts, containerId, totalSlots = 12) {
+    const grid = document.getElementById(containerId);
+    if (!grid) return;
+    grid.classList.add('filtering');
+    grid.innerHTML = '';
+
+    const ocupadas = (escorts || []).slice(0, totalSlots);
+    for (const escort of ocupadas) {
+      const portada = await this.fetchPortada(escort.id);
+      grid.appendChild(this.renderCard(escort, portada.url));
+    }
+
+    // Rellenar los slots restantes con "Tu Espacio Aquí"
+    for (let i = ocupadas.length; i < totalSlots; i++) {
+      grid.appendChild(this.renderEmptyCard());
     }
     grid.classList.remove('filtering');
   }

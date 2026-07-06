@@ -1,6 +1,13 @@
 window.authHelpers = {
   async login(email) {
-    const { error } = await window.supabaseClient.auth.signInWithOtp({ email });
+    const { error } = await window.supabaseClient.auth.signInWithOtp({
+      email,
+      options: {
+        // El link del email debe volver al dashboard, no a la home pública
+        // (la home no carga supabase-js y perdería el token de la sesión).
+        emailRedirectTo: `${window.location.origin}/dashboard/`,
+      },
+    });
     if (error) throw error;
   },
 

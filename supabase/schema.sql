@@ -5,7 +5,7 @@ CREATE TABLE escorts (
   user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE UNIQUE,
   nombre TEXT NOT NULL,
   slug TEXT UNIQUE NOT NULL,
-  categoria TEXT NOT NULL CHECK (categoria IN ('mujeres', 'hombres', 'trans')),
+  categoria TEXT NOT NULL CHECK (categoria IN ('mujeres', 'hombres', 'trans', 'masajistas')),
   edad INTEGER,
   ubicacion TEXT,
   bio TEXT,
