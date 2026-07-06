@@ -183,5 +183,12 @@ BEGIN
 END;
 $$;
 
-INSERT INTO storage.buckets (id, name, public) VALUES ('escort-photos', 'escort-photos', true);
+-- Tope duro a nivel servidor: solo imágenes JPG/PNG/WebP, máximo 5MB.
+-- El JS del cliente valida lo mismo, pero esta es la barrera que no se saltea.
+INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+VALUES (
+  'escort-photos', 'escort-photos', true,
+  5242880,                                        -- 5 MB en bytes
+  ARRAY['image/jpeg', 'image/png', 'image/webp']
+);
 INSERT INTO storage.buckets (id, name, public) VALUES ('verification-docs', 'verification-docs', false);
