@@ -306,7 +306,28 @@ a:hover { color: var(--gold-light); }
 
 /* Botones de contacto */
 .profile-contact { display: flex; gap: .75rem; flex-wrap: wrap; margin-bottom: 2rem; }
-.profile-contact-btn { flex: 1; min-width: 140px; text-align: center; }
+.profile-contact-btn {
+  flex: 1;
+  min-width: 130px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: .5rem;
+}
+.profile-contact-btn .btn-icon { width: 1.15em; height: 1.15em; flex-shrink: 0; }
+
+/* WhatsApp: verde de marca, como en todas las páginas */
+.profile-contact-btn--wa { background: #25D366; color: #fff; border: none; }
+.profile-contact-btn--wa:hover { background: #1ebe5a; }
+
+/* Llamar: sólido neutro, secundario al WhatsApp */
+.profile-contact-btn--call {
+  background: transparent;
+  border: 1px solid var(--gold);
+  color: var(--gold);
+}
+.profile-contact-btn--call:hover { background: var(--gold); color: #000; }
+
 .profile-contact-btn--ghost {
   background: transparent;
   border: 1px solid var(--border);

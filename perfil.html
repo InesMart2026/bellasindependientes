@@ -60,10 +60,14 @@
         const esc = (s) => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
         // Botones de contacto destacados (WhatsApp primero, como en la referencia)
+        const waIcon = '<svg class="btn-icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M17.47 14.38c-.29-.15-1.7-.84-1.96-.93-.26-.1-.45-.15-.64.15-.19.29-.74.93-.9 1.12-.17.19-.33.22-.62.07-.29-.15-1.22-.45-2.32-1.43-.86-.77-1.44-1.71-1.6-2-.17-.29-.02-.45.13-.6.13-.13.29-.34.44-.51.15-.17.19-.29.29-.48.1-.19.05-.36-.02-.51-.07-.15-.64-1.55-.88-2.12-.23-.55-.47-.48-.64-.49-.17-.01-.36-.01-.55-.01-.19 0-.51.07-.77.36-.26.29-1.01.99-1.01 2.41 0 1.42 1.03 2.79 1.18 2.98.15.19 2.03 3.1 4.92 4.35.69.3 1.22.47 1.64.61.69.22 1.32.19 1.81.11.55-.08 1.7-.69 1.94-1.36.24-.67.24-1.24.17-1.36-.07-.12-.26-.19-.55-.34zM12.04 21.5h-.01c-1.75 0-3.47-.47-4.97-1.36l-.36-.21-3.7.97.99-3.6-.23-.37a9.4 9.4 0 0 1-1.44-5.03c0-5.2 4.24-9.44 9.45-9.44 2.52 0 4.89.98 6.67 2.77a9.36 9.36 0 0 1 2.76 6.68c0 5.2-4.24 9.44-9.45 9.44zm8.04-17.49A11.36 11.36 0 0 0 12.04.66C5.79.66.7 5.75.7 12c0 2 .52 3.95 1.52 5.67L.6 23.34l5.8-1.52a11.32 11.32 0 0 0 5.64 1.44h.01c6.25 0 11.34-5.09 11.34-11.34 0-3.03-1.18-5.88-3.32-8.02z"/></svg>';
+        const phoneIcon = '<svg class="btn-icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/></svg>';
         let contactHtml = '';
         if (escort.whatsapp) {
           const wa = String(escort.whatsapp).replace(/[^\d]/g, '');
-          contactHtml += `<a href="https://wa.me/${wa}" target="_blank" rel="noopener" class="btn btn-gold profile-contact-btn">WhatsApp</a>`;
+          const msg = encodeURIComponent(`Hola ${escort.nombre}, te vi en Bellas Escort y quería consultarte.`);
+          contactHtml += `<a href="https://wa.me/${wa}?text=${msg}" target="_blank" rel="noopener" class="btn profile-contact-btn profile-contact-btn--wa">${waIcon}WhatsApp</a>`;
+          contactHtml += `<a href="tel:+${wa}" class="btn profile-contact-btn profile-contact-btn--call">${phoneIcon}Llamar</a>`;
         }
         if (escort.instagram) {
           const ig = String(escort.instagram).replace(/^@/, '');
