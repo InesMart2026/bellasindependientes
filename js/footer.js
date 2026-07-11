@@ -14,6 +14,8 @@
           <a href="/legal/dmca.html">DMCA</a>
           <a href="/legal/2257.html">Declaración 2257</a>
           <a href="/legal/denunciar-trata.html">Denunciar trata</a>
+          <a href="/legal/proteccion-menores.html">Protección de menores</a>
+          <a href="/legal/retiro-contenido.html">Retiro de contenido</a>
           <a href="/legal/contacto.html">Contacto</a>
         </nav>
 
