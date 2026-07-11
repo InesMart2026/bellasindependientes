@@ -15,12 +15,16 @@
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
+html, body { overflow-x: hidden; max-width: 100%; }
+
 body {
   font-family: var(--font-body);
   background: var(--bg-primary);
   color: var(--text-primary);
   min-height: 100vh;
 }
+
+img { max-width: 100%; }
 
 a { color: var(--gold); text-decoration: none; }
 a:hover { color: var(--gold-light); }
@@ -113,7 +117,7 @@ a:hover { color: var(--gold-light); }
 
 /* Cards destacadas: más presencia + marco dorado + corona */
 .grid--feat {
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(320px, 100%), 1fr));
 }
 .card--feat {
   outline: 1px solid rgba(212,175,55,.5);
@@ -140,13 +144,13 @@ a:hover { color: var(--gold-light); }
 
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(280px, 100%), 1fr));
   gap: 1.5rem;
   padding: 0 2rem 3rem;
 }
 
 /* Grid de espacios fijos (3 columnas): tarjetas compradas + "Tu Espacio Aquí" */
-.grid--slots { grid-template-columns: repeat(3, 1fr); }
+.grid--slots { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 
 .card--empty {
   border: 1px dashed rgba(212, 175, 55, .35);
@@ -222,6 +226,7 @@ a:hover { color: var(--gold-light); }
 
 .categories-nav {
   display: flex; justify-content: center; gap: 1rem;
+  flex-wrap: wrap;
   padding: 2rem;
 }
 
@@ -358,9 +363,25 @@ a:hover { color: var(--gold-light); }
   color: var(--text-secondary);
 }
 
+.profile-report {
+  max-width: 1200px;
+  margin: 2.5rem auto 0;
+  padding: 1.5rem 2rem 0;
+  border-top: 1px solid var(--border);
+  text-align: center;
+}
+.profile-report a {
+  color: var(--text-secondary);
+  font-size: .85rem;
+  text-decoration: none;
+  opacity: .7;
+  transition: opacity .2s, color .2s;
+}
+.profile-report a:hover { opacity: 1; color: #e66; }
+
 .gallery-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(250px, 100%), 1fr));
   gap: 1rem;
 }
 
@@ -586,6 +607,96 @@ a.footer-badge:hover { color: var(--gold); border-color: var(--gold); }
 }
 @media (max-width: 520px) {
   .plans-grid { grid-template-columns: 1fr; }
+}
+
+/* ── Pago por horas ── */
+.hours-card {
+  max-width: 1100px;
+  margin: 0 auto 4rem;
+  padding: 2rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+}
+
+.hours-card h3 { font-family: var(--font-display); font-size: 1.3rem; }
+.hours-card > p {
+  color: var(--text-secondary);
+  font-size: .9rem;
+  margin: .5rem 0 1.5rem;
+}
+
+.hours-options {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: .75rem;
+  margin-bottom: 1.5rem;
+}
+
+.hours-option {
+  padding: 1rem .5rem;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: 1rem;
+  cursor: pointer;
+  transition: border-color .3s, color .3s, background-color .3s;
+}
+
+.hours-option small {
+  display: block;
+  margin-top: .25rem;
+  font-size: .7rem;
+  color: var(--text-secondary);
+}
+
+.hours-option:hover { border-color: var(--gold); color: var(--gold); }
+.hours-option:hover small,
+.hours-option[aria-pressed="true"] small { color: inherit; opacity: .8; }
+
+.hours-option[aria-pressed="true"] {
+  border-color: var(--gold);
+  background: rgba(212, 175, 55, .12);
+  color: var(--gold);
+  font-weight: 600;
+}
+
+.hours-total {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--border);
+  margin-bottom: 1.5rem;
+}
+
+.hours-total-label { color: var(--text-secondary); font-size: .9rem; }
+.hours-total-amount {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--gold);
+  transition: opacity .3s;
+}
+.hours-total-amount.is-updating { opacity: .35; }
+
+.hours-note {
+  margin-top: 1rem;
+  color: var(--text-secondary);
+  font-size: .8rem;
+  line-height: 1.5;
+}
+
+@media (max-width: 520px) {
+  .hours-options { grid-template-columns: repeat(2, 1fr); }
+  .hours-card .btn { width: 100%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hours-option, .hours-total-amount { transition: none; }
 }
 
 .btn {
