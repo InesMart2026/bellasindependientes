@@ -31,7 +31,26 @@
         <h2>Mis Fotos</h2>
       </div>
 
-      <div class="upload-area" id="upload-area">
+      <!-- Gate de consentimiento: sin esta declaración no se puede subir. -->
+      <div id="consent-gate" style="display:none;background:var(--card,#1a1a1a);border:1px solid var(--border,#333);border-radius:12px;padding:1.5rem;max-width:640px;margin-bottom:1.5rem;">
+        <h3 style="margin:0 0 .75rem;">Antes de subir fotos</h3>
+        <label style="display:flex;gap:.6rem;align-items:flex-start;cursor:pointer;font-weight:400;">
+          <input type="checkbox" id="consent-check" style="margin-top:.25rem;width:auto;">
+          <span style="font-size:.9rem;color:var(--text-secondary,#aaa);line-height:1.5;">
+            Declaro bajo juramento que soy la persona que aparece en las
+            imágenes que voy a publicar, que era mayor de 18 años al momento
+            en que fueron tomadas, y que tengo el derecho y el consentimiento
+            para publicarlas. Entiendo que subir imágenes de un menor o de un
+            tercero sin su consentimiento es un delito y motivo de bloqueo y
+            denuncia a la autoridad.
+          </span>
+        </label>
+        <button type="button" id="consent-accept" class="btn btn-gold" disabled style="margin-top:1rem;">
+          Aceptar y habilitar subida
+        </button>
+      </div>
+
+      <div class="upload-area" id="upload-area" style="display:none;">
         <p style="font-size:2rem;color:var(--gold);">+</p>
         <p>Hacé click o arrastrá fotos acá</p>
         <p style="font-size:.8rem;">JPG, PNG, WebP — Máx 5MB</p>
@@ -47,13 +66,39 @@
       const user = await authHelpers.requireAuth();
       if (!user) return;
 
-      const { data: escort } = await window.supabaseClient
-        .from('escorts')
-        .select('id')
-        .eq('user_id', user.id)
-        .single();
+      // get_my_profile trae el estado de consentimiento junto con el perfil.
+      const { data: rows } = await window.supabaseClient.rpc('get_my_profile');
+      const escort = rows && rows[0];
 
       if (!escort) { window.location.href = '/dashboard/perfil.html'; return; }
+
+      const gate = document.getElementById('consent-gate');
+      const uploadArea = document.getElementById('upload-area');
+
+      // Muestra el gate o el área de subida según haya consentido o no.
+      function reflectConsent(hasConsent) {
+        gate.style.display = hasConsent ? 'none' : 'block';
+        uploadArea.style.display = hasConsent ? 'flex' : 'none';
+      }
+
+      const consentCheck = document.getElementById('consent-check');
+      const consentAccept = document.getElementById('consent-accept');
+      consentCheck.addEventListener('change', () => {
+        consentAccept.disabled = !consentCheck.checked;
+      });
+      consentAccept.addEventListener('click', async () => {
+        if (!consentCheck.checked) return;
+        consentAccept.disabled = true;
+        const { data, error } = await window.supabaseClient.rpc('accept_photo_consent');
+        if (error || !data?.ok) {
+          consentAccept.disabled = false;
+          alert('No se pudo registrar el consentimiento. Intentá de nuevo.');
+          return;
+        }
+        reflectConsent(true);
+      });
+
+      reflectConsent(escort.consentimiento_fotos === true);
 
       async function loadPhotos() {
         const photos = await galleryHelpers.fetchPhotos(escort.id);
