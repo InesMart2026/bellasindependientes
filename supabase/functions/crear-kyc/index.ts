@@ -36,10 +36,15 @@ Deno.serve(async (req) => {
 
     const { data: escort } = await admin
       .from('escorts')
-      .select('id, estado_verificacion, acuerdo_legal')
+      .select('id, estado_verificacion, acuerdo_legal, bloqueada')
       .eq('user_id', user.id)
       .single();
     if (!escort) return json({ error: 'primero completá tus datos' }, 400);
+
+    // Perfil ya bloqueado por la administración: no reingresa al flujo.
+    if (escort.bloqueada) {
+      return json({ error: 'esta cuenta fue bloqueada por incumplir las políticas' }, 403);
+    }
 
     // No re-verificar a quien ya está aprobada.
     if (escort.estado_verificacion === 'verificado') {
@@ -48,6 +53,23 @@ Deno.serve(async (req) => {
     // Debe haber aceptado el acuerdo legal antes de subir documentos.
     if (!escort.acuerdo_legal) {
       return json({ error: 'debés aceptar el acuerdo legal primero' }, 400);
+    }
+
+    // Gate de lista negra: si el DNI cargado está vetado, se bloquea el
+    // perfil y se corta. La comparación es por hash (is_dni_blacklisted);
+    // el DNI plano no se expone. Toma el DNI de la fila (desencriptado en
+    // la RPC block_and_blacklist si hiciera falta) — acá basta con el
+    // dni_hash del valor guardado.
+    const { data: banned, error: banErr } = await admin
+      .rpc('is_dni_blacklisted_for_escort', { escort_id_param: escort.id });
+    if (!banErr && banned === true) {
+      await admin.rpc('block_and_blacklist', {
+        escort_id_param: escort.id,
+        motivo_param: 'DNI en lista negra (re-registro tras bloqueo)',
+        add_to_blacklist: false, // ya está en la lista
+        report_id_param: null,
+      });
+      return json({ error: 'esta identidad fue vetada de la plataforma' }, 403);
     }
 
     // 2. Crear la sesión en Didit (API v3)

@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Denuncias — Admin Bellas Escort</title>
+  <meta name="robots" content="noindex,nofollow">
+  <link rel="stylesheet" href="/css/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/js/supabase.js"></script>
+  <style>
+    :root { --danger: #e05252; }
+    body { max-width: 1100px; margin: 0 auto; padding: 2rem 1.25rem 4rem; }
+    .admin-head { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 2rem; }
+    .admin-head h1 { font-size: 1.5rem; }
+    .admin-gate { max-width: 420px; margin: 4rem auto; }
+    .admin-gate p { color: var(--text-secondary); margin-bottom: 1.5rem; font-size: .9rem; }
+    label { display: block; font-size: .85rem; color: var(--text-secondary); margin-bottom: .4rem; }
+    input, select, textarea {
+      width: 100%; background: var(--bg-secondary); border: 1px solid var(--border);
+      color: var(--text-primary); padding: .7rem; border-radius: 6px; font: inherit;
+    }
+    input:focus, select:focus, textarea:focus { outline: none; border-color: var(--gold); }
+    .filters { display: flex; gap: .75rem; align-items: flex-end; margin-bottom: 1.5rem; }
+    .filters .field { flex: 0 0 220px; }
+    .msg { padding: .9rem 1rem; border-radius: 8px; margin-bottom: 1.25rem; font-size: .9rem; display: none; }
+    .msg.ok  { display: block; background: rgba(212,175,55,.08); border: 1px solid var(--gold); color: var(--gold-light); }
+    .msg.err { display: block; background: rgba(224,82,82,.08); border: 1px solid var(--danger); color: #f0a5a5; }
+
+    .report { border: 1px solid var(--border); border-radius: 10px; padding: 1.25rem; margin-bottom: 1rem; background: var(--bg-card); }
+    .report.prio { border-color: var(--danger); box-shadow: 0 0 0 1px rgba(224,82,82,.25); }
+    .report-top { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: .5rem; margin-bottom: .75rem; }
+    .cat { font-weight: 700; font-size: .95rem; }
+    .cat.prio { color: var(--danger); }
+    .badge { font-size: .7rem; text-transform: uppercase; letter-spacing: .04em; padding: .2rem .55rem; border-radius: 999px; border: 1px solid var(--border); color: var(--text-secondary); }
+    .badge.nueva { border-color: var(--gold); color: var(--gold); }
+    .badge.resuelta { border-color: #4a7; color: #6c9; }
+    .badge.descartada { opacity: .6; }
+    .report .meta { font-size: .8rem; color: var(--text-secondary); margin-bottom: .5rem; }
+    .report .meta a { color: var(--gold); }
+    .report .motivo { font-size: .9rem; line-height: 1.55; white-space: pre-wrap; background: var(--bg-secondary); padding: .75rem; border-radius: 6px; margin-bottom: 1rem; }
+    .report-actions { display: flex; gap: .6rem; flex-wrap: wrap; }
+    .btn-sm { padding: .5rem .9rem; font-size: .82rem; border-radius: 6px; cursor: pointer; border: 1px solid var(--border); background: transparent; color: var(--text-primary); }
+    .btn-block { background: var(--danger); border-color: var(--danger); color: #fff; }
+    .btn-dismiss { color: var(--text-secondary); }
+    .btn-sm:disabled { opacity: .5; cursor: default; }
+    .chk-row { display: flex; align-items: center; gap: .4rem; font-size: .8rem; color: var(--text-secondary); margin-right: auto; }
+    .chk-row input { width: auto; }
+    .empty { text-align: center; color: var(--text-secondary); padding: 3rem 1rem; }
+    .logout { background: none; border: none; color: var(--text-secondary); cursor: pointer; font-size: .85rem; text-decoration: underline; width: auto; }
+  </style>
+</head>
+<body>
+  <!-- Puerta de acceso: pide la clave admin. Nunca se hardcodea. -->
+  <div id="gate" class="admin-gate">
+    <a href="/" class="header-logo" style="display:block;text-align:center;margin-bottom:1.5rem;">Bellas Escort</a>
+    <h2 style="text-align:center;margin-bottom:1rem;">Panel de denuncias</h2>
+    <p>Ingresá la clave de administración. Se guarda solo en esta pestaña y se borra al cerrarla.</p>
+    <div id="gate-msg" class="msg"></div>
+    <form id="gate-form">
+      <label for="adminkey">Clave admin</label>
+      <input type="password" id="adminkey" autocomplete="off" required>
+      <button type="submit" class="btn btn-gold" style="width:100%;margin-top:1rem;">Entrar</button>
+    </form>
+  </div>
+
+  <!-- Panel (oculto hasta validar la clave) -->
+  <div id="panel" style="display:none;">
+    <div class="admin-head">
+      <h1>Denuncias</h1>
+      <button class="logout" id="logout">Cerrar sesión</button>
+    </div>
+
+    <div id="msg" class="msg"></div>
+
+    <div class="filters">
+      <div class="field">
+        <label for="filtro">Ver</label>
+        <select id="filtro">
+          <option value="pendientes">Pendientes de revisar</option>
+          <option value="nueva">Nuevas</option>
+          <option value="en_revision">En revisión</option>
+          <option value="resuelta">Resueltas (bloqueadas)</option>
+          <option value="descartada">Descartadas</option>
+          <option value="todas">Todas</option>
+        </select>
+      </div>
+      <button class="btn-sm" id="reload">Actualizar</button>
+    </div>
+
+    <div id="list"></div>
+  </div>
+
+  <script>
+    const FN_BASE = 'https://nvhjnopnonsrbyyvalvx.functions.supabase.co';
+    let ADMIN_KEY = sessionStorage.getItem('be_admin_key') || '';
+
+    const esc = (s) => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+    const PRIO = new Set(['menores', 'trata']);
+    const CAT_LABEL = {
+      menores: 'Menores / abuso infantil', trata: 'Trata o explotación',
+      multicuenta: 'Multicuenta', suplantacion: 'Suplantación de identidad',
+      contenido: 'Contenido prohibido', estafa: 'Estafa / extorsión', otro: 'Otro',
+    };
+
+    // Supabase exige un Authorization con la anon key en toda Edge Function:
+    // sin él rechaza la request ANTES de ejecutar nuestro código y devuelve 401,
+    // lo que se confundiría con una clave admin mala. La anon key no autoriza
+    // nada acá: la autorización real es X-Admin-Key, que valida la función.
+    async function callFn(path, body) {
+      // Un fallo de red o de CORS hace que fetch lance, no que devuelva error.
+      // Sin este catch la excepción sube y deja el botón trabado en "Verificando…"
+      // sin decirle nada al admin. status 0 = no hubo respuesta del server.
+      try {
+        const res = await fetch(FN_BASE + path, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + SUPABASE_ANON_KEY,
+            'apikey': SUPABASE_ANON_KEY,
+            'X-Admin-Key': ADMIN_KEY,
+          },
+          body: JSON.stringify(body || {}),
+        });
+        const data = await res.json().catch(() => ({}));
+        return { status: res.status, data };
+      } catch (err) {
+        console.error('callFn falló:', err);
+        return { status: 0, data: {} };
+      }
+    }
+
+    function showMsg(el, text, kind) {
+      el.textContent = text;
+      el.className = 'msg ' + kind;
+    }
+
+    // ── Puerta de acceso ──────────────────────────────────────────
+    document.getElementById('gate-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      ADMIN_KEY = document.getElementById('adminkey').value.trim();
+      const gateMsg = document.getElementById('gate-msg');
+      const btn = e.target.querySelector('button');
+      btn.disabled = true; btn.textContent = 'Verificando…';
+
+      // Se valida la clave intentando listar. Si es correcta, 200; si no, 401.
+      const { status } = await callFn('/admin-reports', { estado: 'pendientes' });
+      btn.disabled = false; btn.textContent = 'Entrar';
+
+      if (status === 401) {
+        showMsg(gateMsg, 'Clave incorrecta.', 'err');
+        return;
+      }
+      if (status !== 200) {
+        showMsg(gateMsg, 'No se pudo conectar. Revisá que las funciones estén deployadas.', 'err');
+        return;
+      }
+      sessionStorage.setItem('be_admin_key', ADMIN_KEY);
+      document.getElementById('gate').style.display = 'none';
+      document.getElementById('panel').style.display = 'block';
+      loadReports();
+    });
+
+    document.getElementById('logout').addEventListener('click', () => {
+      sessionStorage.removeItem('be_admin_key');
+      location.reload();
+    });
+
+    document.getElementById('reload').addEventListener('click', loadReports);
+    document.getElementById('filtro').addEventListener('change', loadReports);
+
+    // ── Listado ───────────────────────────────────────────────────
+    async function loadReports() {
+      const list = document.getElementById('list');
+      const msg = document.getElementById('msg');
+      msg.className = 'msg';
+      list.innerHTML = '<p class="empty">Cargando…</p>';
+
+      const estado = document.getElementById('filtro').value;
+      const { status, data } = await callFn('/admin-reports', { estado });
+
+      if (status !== 200 || !data.ok) {
+        list.innerHTML = '';
+        showMsg(msg, data.error || 'No se pudieron cargar las denuncias.', 'err');
+        return;
+      }
+
+      const reports = data.reports || [];
+      if (!reports.length) {
+        list.innerHTML = '<p class="empty">No hay denuncias en esta vista.</p>';
+        return;
+      }
+
+      list.innerHTML = reports.map(renderReport).join('');
+    }
+
+    function renderReport(r) {
+      const prio = PRIO.has(r.categoria);
+      const fecha = new Date(r.created_at).toLocaleString('es-AR');
+      const perfilLink = r.slug
+        ? `<a href="/perfil.html?slug=${encodeURIComponent(r.slug)}" target="_blank" rel="noopener">${esc(r.slug)}</a>`
+        : '<em>perfil sin slug</em>';
+      const canAct = (r.estado === 'nueva' || r.estado === 'en_revision');
+      const hasEscort = !!r.escort_id;
+
+      const acciones = canAct ? `
+        <div class="report-actions" data-id="${esc(r.id)}" data-escort="${esc(r.escort_id || '')}" data-cat="${esc(r.categoria)}">
+          <label class="chk-row">
+            <input type="checkbox" class="chk-blacklist" ${hasEscort ? 'checked' : 'disabled'}>
+            Vetar DNI (lista negra)
+          </label>
+          <button class="btn-sm btn-block" ${hasEscort ? '' : 'disabled title="La denuncia no está ligada a un perfil"'}>Bloquear perfil</button>
+          <button class="btn-sm btn-dismiss">Descartar</button>
+        </div>` : '';
+
+      return `
+        <div class="report ${prio ? 'prio' : ''}">
+          <div class="report-top">
+            <span class="cat ${prio ? 'prio' : ''}">${esc(CAT_LABEL[r.categoria] || r.categoria)}</span>
+            <span class="badge ${esc(r.estado)}">${esc(r.estado)}</span>
+          </div>
+          <div class="meta">Perfil: ${perfilLink} · ${esc(fecha)}</div>
+          <div class="meta">Denunciante: ${esc(r.email)}</div>
+          <div class="motivo">${esc(r.motivo)}</div>
+          ${acciones}
+        </div>`;
+    }
+
+    // ── Acciones (delegación de eventos) ──────────────────────────
+    document.getElementById('list').addEventListener('click', async (e) => {
+      const box = e.target.closest('.report-actions');
+      if (!box) return;
+      const reportId = box.dataset.id;
+      const escortId = box.dataset.escort;
+      const msg = document.getElementById('msg');
+
+      if (e.target.classList.contains('btn-block')) {
+        if (!escortId) return;
+        const cat = box.dataset.cat;
+        const addToBlacklist = box.querySelector('.chk-blacklist').checked;
+        if (!confirm('¿Bloquear este perfil' + (addToBlacklist ? ' y vetar su DNI' : '') + '? Esta acción despublica el perfil.')) return;
+
+        setBusy(box, true);
+        const { status, data } = await callFn('/admin-bloquear', {
+          accion: 'bloquear',
+          escort_id: escortId,
+          motivo: 'Denuncia comprobada: ' + cat,
+          add_to_blacklist: addToBlacklist,
+          report_id: reportId,
+        });
+        if (status === 200 && data.ok) {
+          showMsg(msg, 'Perfil bloqueado.', 'ok');
+          loadReports();
+        } else {
+          showMsg(msg, data.error || 'No se pudo bloquear.', 'err');
+          setBusy(box, false);
+        }
+      }
+
+      if (e.target.classList.contains('btn-dismiss')) {
+        if (!confirm('¿Descartar esta denuncia? Se marca como revisada sin bloquear.')) return;
+        setBusy(box, true);
+        const { status, data } = await callFn('/admin-bloquear', {
+          accion: 'descartar',
+          report_id: reportId,
+        });
+        if (status === 200 && data.ok) {
+          showMsg(msg, 'Denuncia descartada.', 'ok');
+          loadReports();
+        } else {
+          showMsg(msg, data.error || 'No se pudo descartar.', 'err');
+          setBusy(box, false);
+        }
+      }
+    });
+
+    function setBusy(box, busy) {
+      box.querySelectorAll('button').forEach(b => b.disabled = busy);
+    }
+
+    // Si ya había clave en la sesión, entrar directo.
+    if (ADMIN_KEY) {
+      document.getElementById('gate').style.display = 'none';
+      document.getElementById('panel').style.display = 'block';
+      loadReports();
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22><rect width=%2232%22 height=%2232%22 rx=%226%22 fill=%22%23000%22/><text x=%2216%22 y=%2221%22 font-family=%22Georgia,serif%22 font-size=%2215%22 font-weight=%22700%22 fill=%22%23D4AF37%22 text-anchor=%22middle%22>BE</text></svg>">
+  <meta name="RATING" content="RTA-5042-1996-1400-1577-RTA">
+  <title>Denunciar un perfil — Bellas Escort</title>
+  <meta name="description" content="Denunciá un perfil que incumpla las políticas o la ley. Revisamos todas las denuncias.">
+  <meta name="robots" content="noindex,follow">
+  <link rel="stylesheet" href="/css/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/js/supabase.js"></script>
+  <style>
+    .report-form { max-width: 640px; }
+    .report-form .form-row { margin-bottom: 1.25rem; }
+    .report-form label { display: block; color: var(--text-primary); font-size: .9rem; margin-bottom: .5rem; }
+    .report-form input, .report-form select, .report-form textarea {
+      width: 100%; background: var(--bg-secondary); border: 1px solid var(--border);
+      color: var(--text-primary); padding: .75rem; border-radius: 6px; font: inherit;
+    }
+    .report-form input:focus, .report-form select:focus, .report-form textarea:focus {
+      outline: none; border-color: var(--gold);
+    }
+    .report-form textarea { min-height: 130px; resize: vertical; }
+    .report-form .hint { color: var(--text-secondary); font-size: .8rem; margin-top: .35rem; }
+    .report-target { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: .9rem 1rem; margin-bottom: 1.75rem; color: var(--text-secondary); font-size: .9rem; }
+    .report-target strong { color: var(--gold); }
+    .report-msg { padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; font-size: .95rem; display: none; }
+    .report-msg.ok  { display: block; background: rgba(212,175,55,.08); border: 1px solid var(--gold); color: var(--gold-light); }
+    .report-msg.err { display: block; background: rgba(230,102,102,.08); border: 1px solid #e66; color: #f0a5a5; }
+    .report-priority { background: rgba(230,102,102,.06); border: 1px solid #5a2a2a; border-radius: 8px; padding: 1rem; margin-bottom: 1.75rem; }
+    .report-priority p { color: #f0a5a5 !important; margin: 0; font-size: .88rem; line-height: 1.6; }
+    .report-priority a { color: #ffb4b4; text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <a href="/" class="header-logo">Bellas Escort</a>
+    <nav class="header-nav">
+      <a href="/mujeres.html">Mujeres</a>
+      <a href="/hombres.html">Hombres</a>
+      <a href="/trans.html">Trans</a>
+      <a href="/masajistas.html">Masajistas</a>
+      <a href="/planes.html">Planes</a>
+      <a href="/dashboard/login.html">Acceder</a>
+    </nav>
+  </header>
+
+  <main class="legal">
+    <h1>Denunciar un perfil</h1>
+    <p class="legal-updated">Tu denuncia es confidencial. Revisamos todas.</p>
+
+    <div class="report-priority">
+      <p>
+        <strong>¿Es una emergencia o hay un menor en riesgo?</strong>
+        No esperes. En Argentina llamá a la <a href="tel:145">Línea 145</a>
+        (trata y explotación, 24 h, gratuita y anónima) o al
+        <a href="tel:911">911</a>. Para material de abuso sexual infantil, también
+        <a href="https://www.argentina.gob.ar/grooming" target="_blank" rel="noopener">argentina.gob.ar/grooming</a>.
+      </p>
+    </div>
+
+    <p>
+      Usá este formulario para reportar un perfil que incumpla nuestras políticas
+      o la ley: contenido con menores, indicios de trata, cuentas múltiples de una
+      misma persona, suplantación de identidad, estafas o contenido prohibido.
+      <strong>Cada denuncia se revisa</strong>; si se comprueba la infracción, la
+      cuenta se bloquea y la identidad queda vetada de la plataforma.
+    </p>
+
+    <div id="report-target" class="report-target" style="display:none;"></div>
+
+    <div id="report-msg" class="report-msg"></div>
+
+    <form id="report-form" class="report-form">
+      <div class="form-row">
+        <label for="categoria">Motivo de la denuncia *</label>
+        <select id="categoria" required>
+          <option value="">Elegí un motivo…</option>
+          <option value="menores">Aparecen menores de edad / contenido de abuso infantil</option>
+          <option value="trata">Indicios de trata o explotación de personas</option>
+          <option value="multicuenta">La misma persona tiene varias cuentas</option>
+          <option value="suplantacion">Usa fotos o identidad de otra persona</option>
+          <option value="contenido">Contenido prohibido o fuera de las políticas</option>
+          <option value="estafa">Estafa, extorsión o datos falsos</option>
+          <option value="otro">Otro</option>
+        </select>
+      </div>
+
+      <div class="form-row">
+        <label for="slug">Perfil denunciado</label>
+        <input type="text" id="slug" placeholder="Nombre o URL del perfil">
+        <p class="hint">Si entraste desde el botón "Denunciar" del perfil, ya viene cargado.</p>
+      </div>
+
+      <div class="form-row">
+        <label for="email">Tu correo electrónico *</label>
+        <input type="email" id="email" required placeholder="tucorreo@ejemplo.com">
+        <p class="hint">Lo usamos solo para pedirte más datos si hace falta. No se publica.</p>
+      </div>
+
+      <div class="form-row">
+        <label for="motivo">Contanos qué pasó *</label>
+        <textarea id="motivo" required minlength="10" maxlength="4000"
+          placeholder="Describí con el mayor detalle posible por qué denunciás este perfil (qué viste, dónde, cuándo)."></textarea>
+        <p class="hint">Mínimo 10 caracteres. No incluyas datos de tarjetas ni contraseñas.</p>
+      </div>
+
+      <label style="display:flex;gap:.6rem;align-items:flex-start;cursor:pointer;color:var(--text-secondary);font-size:.85rem;margin-bottom:1.5rem;">
+        <input type="checkbox" id="veracidad" required style="width:auto;margin-top:.25rem;">
+        <span>Declaro que la información que aporto es veraz y de buena fe. Entiendo
+        que las denuncias falsas pueden acarrear responsabilidad.</span>
+      </label>
+
+      <button type="submit" class="btn btn-gold" id="submit-btn">Enviar denuncia</button>
+    </form>
+  </main>
+
+  <div id="site-footer"></div>
+  <script src="/js/footer.js" defer></script>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const params = new URLSearchParams(window.location.search);
+      const slug = params.get('slug');
+      const targetEl = document.getElementById('report-target');
+      const slugInput = document.getElementById('slug');
+
+      if (slug) {
+        slugInput.value = slug;
+        slugInput.readOnly = true;
+        targetEl.style.display = 'block';
+        // slug es texto controlado por la URL: escapar antes de inyectarlo.
+        const esc = (s) => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+        targetEl.innerHTML = `Estás denunciando el perfil: <strong>${esc(slug)}</strong>`;
+      }
+
+      const form = document.getElementById('report-form');
+      const msg = document.getElementById('report-msg');
+      const btn = document.getElementById('submit-btn');
+
+      function showMsg(text, kind) {
+        msg.textContent = text;
+        msg.className = 'report-msg ' + kind;
+        msg.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const categoria = document.getElementById('categoria').value;
+        const email = document.getElementById('email').value.trim();
+        const motivo = document.getElementById('motivo').value.trim();
+        const slugVal = slugInput.value.trim() || null;
+
+        if (!categoria || !email || motivo.length < 10) {
+          showMsg('Completá el motivo, tu correo y una descripción de al menos 10 caracteres.', 'err');
+          return;
+        }
+
+        btn.disabled = true;
+        btn.textContent = 'Enviando…';
+
+        try {
+          const { data, error } = await window.supabaseClient.rpc('submit_report', {
+            slug_param: slugVal,
+            categoria_param: categoria,
+            email_param: email,
+            motivo_param: motivo,
+          });
+
+          if (error || !data?.ok) {
+            const reason = data?.error || 'No se pudo enviar la denuncia.';
+            showMsg(reason + ' Si el problema persiste, escribinos desde Contacto.', 'err');
+            btn.disabled = false;
+            btn.textContent = 'Enviar denuncia';
+            return;
+          }
+
+          form.style.display = 'none';
+          showMsg('Recibimos tu denuncia. Nuestro equipo la revisará a la brevedad. Gracias por ayudarnos a mantener la plataforma segura.', 'ok');
+        } catch (err) {
+          showMsg('No se pudo enviar la denuncia. Intentá de nuevo en un momento.', 'err');
+          btn.disabled = false;
+          btn.textContent = 'Enviar denuncia';
+        }
+      });
+    });
+  </script>
+</body>
+</html>
