@@ -60,13 +60,15 @@ Deno.serve(async (req) => {
     if (!pkg) return json({ error: 'paquete inválido' }, 400);
 
     // 3. Registrar el pago pendiente
+    // Un paquete dura días u horas (constraint en packages), nunca ambos.
     const { data: pago, error: pagoErr } = await admin
       .from('pagos')
       .insert({
         escort_id: escort.id,
         package_id: pkg.id,
         monto: pkg.precio_total,
-        dias: pkg.dias,
+        dias: pkg.dias ?? 0,
+        horas: pkg.horas ?? 0,
         status: 'pending',
       })
       .select('id')

@@ -34,8 +34,8 @@
 
       <h3 style="margin:2.5rem 0 1rem;">Renová o extendé tu visibilidad</h3>
       <p style="color:var(--text-secondary);font-size:.9rem;margin-bottom:1.5rem;">
-        Comprás días de visibilidad. Si tu perfil sigue activo, los días se
-        suman al vencimiento actual.
+        Comprás tiempo de visibilidad, por días o por horas. Si tu perfil sigue
+        activo, el tiempo se suma al vencimiento actual.
       </p>
       <div class="plans-grid" id="packages-offer"></div>
     </main>
@@ -83,13 +83,25 @@
       const vigente = escort.activa && vence && vence >= ahora;
 
       if (vigente) {
-        const diasRest = Math.ceil((vence - ahora) / 86400000);
+        // Con paquetes por hora el resto puede ser menor a un día: redondear
+        // a días le mentiría a la escort justo cuando está por vencer.
+        const restaMs = vence - ahora;
+        const horasRest = Math.ceil(restaMs / 3600000);
+        const porHoras = restaMs < 86400000;
+        const cant = porHoras ? horasRest : Math.ceil(restaMs / 86400000);
+        const unidad = porHoras
+          ? (cant === 1 ? 'hora' : 'horas')
+          : (cant === 1 ? 'día' : 'días');
+        const vencimiento = porHoras
+          ? `Vence hoy a las ${vence.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })}`
+          : `Vence el ${vence.toLocaleDateString('es-AR')}`;
+
         statusDiv.innerHTML = `
           <div class="plan-card plan-card--featured" style="text-align:left;">
             <p style="color:var(--gold);font-size:1.1rem;margin-bottom:.5rem;">● Perfil activo</p>
-            <p style="font-size:2rem;font-weight:700;">${diasRest} ${diasRest === 1 ? 'día' : 'días'} <small style="font-size:.9rem;color:var(--text-secondary);font-weight:400;">restantes</small></p>
+            <p style="font-size:2rem;font-weight:700;">${cant} ${unidad} <small style="font-size:.9rem;color:var(--text-secondary);font-weight:400;">restantes</small></p>
             <p style="color:var(--text-secondary);font-size:.85rem;margin-top:.5rem;">
-              Vence el ${vence.toLocaleDateString('es-AR')}
+              ${vencimiento}${porHoras ? ' — al cumplirse, tu perfil deja de mostrarse.' : ''}
             </p>
           </div>`;
       } else if (vence) {
@@ -97,7 +109,8 @@
           <div class="plan-card" style="text-align:left;border-color:#a33;">
             <p style="color:#e66;font-size:1.1rem;margin-bottom:.5rem;">● Perfil vencido</p>
             <p style="color:var(--text-secondary);font-size:.9rem;">
-              Venció el ${vence.toLocaleDateString('es-AR')}. Renová para volver a aparecer en el listado.
+              Venció el ${vence.toLocaleDateString('es-AR')} y tu perfil ya no se muestra en el listado.
+              Tus fotos y tu verificación siguen guardadas: renová y volvés a aparecer.
             </p>
           </div>`;
       } else {
@@ -120,13 +133,15 @@
       const offer = document.getElementById('packages-offer');
       const base = 15000; // precio/día de referencia (paquete de 1 día)
       (packages || []).forEach(pkg => {
-        const ahorro = Math.round((1 - pkg.precio_dia / base) * 100);
+        const porHora = pkg.horas > 0;
+        const ahorro = porHora ? 0 : Math.round((1 - pkg.precio_dia / base) * 100);
+        const unidad = porHora ? 'hora' : 'día';
         offer.innerHTML += `
           <div class="plan-card ${pkg.destacada ? 'plan-card--featured' : ''}">
             ${pkg.destacada ? '<span class="plan-badge-top">Recomendado</span>' : ''}
             <h3>${pkg.nombre}</h3>
             <div class="plan-price">$${Number(pkg.precio_total).toLocaleString('es-AR')}</div>
-            <p class="plan-perday">$${Number(pkg.precio_dia).toLocaleString('es-AR')} / día</p>
+            <p class="plan-perday">$${Number(pkg.precio_dia).toLocaleString('es-AR')} / ${unidad}</p>
             ${ahorro > 0 ? `<p class="plan-save">Ahorrás ${ahorro}%</p>` : ''}
             <button class="btn btn-gold" data-pkg="${pkg.id}">Contratar</button>
           </div>`;

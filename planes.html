@@ -29,11 +29,33 @@
 
   <h2 class="section-title">Activá tu perfil</h2>
   <p style="text-align:center;color:var(--text-secondary);max-width:640px;margin:0 auto 2.5rem;">
-    Tu slot se activa apenas se acredita el pago y queda visible por los días que elijas.
-    Cuantos más días contratás, menor es el precio por día.
+    Tu slot se activa apenas se acredita el pago y queda visible por el tiempo que elijas.
+    Cuantos más días contratás, menor es el precio por día. Si necesitás menos, pagás por hora.
   </p>
 
   <div class="plans-grid" id="plans-container"></div>
+
+  <section class="hours-card" id="hours-card" hidden>
+    <h3>Pago por horas</h3>
+    <p>
+      ¿Trabajás solo un turno? Elegí cuántas horas y pagás nada más que eso.
+      Los perfiles por hora aparecen en el listado debajo de los planes por día
+      y no llevan posición destacada.
+    </p>
+
+    <div class="hours-options" id="hours-options" role="group" aria-label="Cantidad de horas"></div>
+
+    <div class="hours-total">
+      <span class="hours-total-label" id="hours-detail"></span>
+      <span class="hours-total-amount" id="hours-total" aria-live="polite"></span>
+    </div>
+
+    <button class="btn btn-gold" id="hours-cta">Contratar horas</button>
+    <p class="hours-note">
+      Al cumplirse las horas tu perfil deja de mostrarse y libera el espacio.
+      No se borra: tus fotos y tu verificación quedan guardadas para que renueves cuando quieras.
+    </p>
+  </section>
 
   <div id="site-footer"></div>
   <script src="/js/footer.js" defer></script>
@@ -57,10 +79,18 @@
         return;
       }
 
-      const base = packages[0]?.precio_dia || 15000; // precio/día de 1 día
-      const recomendado = packages.reduce((a, b) => (b.dias > a.dias ? b : a), packages[0]);
+      // Un paquete dura días u horas, nunca ambos (constraint en la DB).
+      const porHora = packages.filter(p => p.horas > 0);
+      const porDia = packages.filter(p => !p.horas);
 
-      packages.forEach(pkg => {
+      renderHoras(porHora);
+
+      if (!porDia.length) return;
+
+      const base = porDia[0].precio_dia; // precio/día del paquete de 1 día
+      const recomendado = porDia.reduce((a, b) => (b.dias > a.dias ? b : a), porDia[0]);
+
+      porDia.forEach(pkg => {
         const ahorro = Math.round((1 - pkg.precio_dia / base) * 100);
         const featured = pkg.id === recomendado.id;
         const card = document.createElement('div');
@@ -87,6 +117,55 @@
         await iniciarPago(btn.dataset.package, btn);
       });
     });
+
+    // El total nunca se calcula en el cliente: cada opción de horas es un
+    // paquete real y el precio autoritativo lo pone el server desde la DB.
+    function renderHoras(paquetes) {
+      if (!paquetes.length) return;
+
+      const card = document.getElementById('hours-card');
+      const options = document.getElementById('hours-options');
+      const total = document.getElementById('hours-total');
+      const detail = document.getElementById('hours-detail');
+      const cta = document.getElementById('hours-cta');
+
+      let elegido = paquetes[0];
+
+      const pintar = () => {
+        options.querySelectorAll('button').forEach(b => {
+          b.setAttribute('aria-pressed', String(b.dataset.package === elegido.id));
+        });
+        total.textContent = fmt(elegido.precio_total);
+        detail.textContent =
+          `${elegido.horas} horas × ${fmt(elegido.precio_dia)} por hora`;
+      };
+
+      paquetes.forEach(pkg => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'hours-option';
+        btn.dataset.package = pkg.id;
+        btn.innerHTML =
+          `${pkg.horas} h<small>${fmt(pkg.precio_dia)}/h</small>`;
+        options.appendChild(btn);
+      });
+
+      options.addEventListener('click', (e) => {
+        const btn = e.target.closest('button[data-package]');
+        if (!btn || btn.dataset.package === elegido.id) return;
+        elegido = paquetes.find(p => p.id === btn.dataset.package);
+        total.classList.add('is-updating');
+        setTimeout(() => {
+          pintar();
+          total.classList.remove('is-updating');
+        }, 120);
+      });
+
+      cta.addEventListener('click', () => iniciarPago(elegido.id, cta));
+
+      pintar();
+      card.hidden = false;
+    }
 
     async function iniciarPago(packageId, btn) {
       // Sin sesión → mandamos a login y volvemos a planes.
