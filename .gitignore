@@ -4,8 +4,9 @@
 node_modules/
 .DS_Store
 
-# Supabase CLI (no commitear temporales ni credenciales de la CLI)
-supabase/.temp/
+# Supabase CLI (no commitear temporales ni credenciales de la CLI).
+# El CLI escribe .temp/ en el directorio donde se lo corre, no solo en la raíz.
+**/.temp/
 .branches/
 
 # Artefactos de captura de pantalla (no son parte del sitio)
