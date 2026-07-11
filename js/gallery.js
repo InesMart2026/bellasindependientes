@@ -10,14 +10,16 @@ window.galleryHelpers = {
 
   async fetchEscorts(categoria = null) {
     // Solo perfiles pagos y vigentes. Destacadas primero (compraron posición),
-    // luego por vencimiento más lejano. La RLS ya filtra visible_hasta, pero
-    // lo repetimos acá para controlar el orden del grid.
+    // después los planes por día, y al fondo los slots por hora: pagan menos
+    // por la misma visibilidad, así que no compiten con quien compra días.
+    // La RLS ya filtra visible_hasta, pero lo repetimos acá para el orden.
     let query = window.supabaseClient
       .from('escorts')
       .select('*')
       .eq('activa', true)
       .gte('visible_hasta', new Date().toISOString())
       .order('destacada', { ascending: false })
+      .order('slot_por_hora', { ascending: true })
       .order('visible_hasta', { ascending: false });
 
     if (categoria) query = query.eq('categoria', categoria);
@@ -161,23 +163,40 @@ window.galleryHelpers = {
     grid.classList.remove('filtering');
   },
 
-  async renderSlots(escorts, containerId, totalSlots = 12) {
+  // `minSlots` es un piso visual, NO un cupo: toda escort que pagó se muestra.
+  // Sirve para que la grilla no se vea vacía cuando hay pocos perfiles y para
+  // captar altas con las tarjetas "Tu Espacio Aquí".
+  async renderSlots(escorts, containerId, minSlots = 12) {
     const grid = document.getElementById(containerId);
     if (!grid) return;
     grid.classList.add('filtering');
     grid.innerHTML = '';
 
-    const ocupadas = (escorts || []).slice(0, totalSlots);
+    const ocupadas = escorts || [];
     for (const escort of ocupadas) {
       const portada = await this.fetchPortada(escort.id);
       grid.appendChild(this.renderCard(escort, portada.url));
     }
 
-    // Rellenar los slots restantes con "Tu Espacio Aquí"
-    for (let i = ocupadas.length; i < totalSlots; i++) {
+    // Relleno: hasta el piso visual y, pasado ese punto, solo lo justo para
+    // cerrar la última fila. Sin esto la grilla queda con un hueco al final.
+    const columnas = this.gridColumns(grid);
+    const resto = ocupadas.length % columnas;
+    const huecos = ocupadas.length < minSlots
+      ? minSlots - ocupadas.length
+      : (resto ? columnas - resto : 0);
+
+    for (let i = 0; i < huecos; i++) {
       grid.appendChild(this.renderEmptyCard());
     }
     grid.classList.remove('filtering');
+  },
+
+  // Cantidad real de columnas del grid según el CSS vigente (varía por breakpoint).
+  gridColumns(grid) {
+    const cols = getComputedStyle(grid).gridTemplateColumns;
+    const n = cols && cols !== 'none' ? cols.split(' ').length : 0;
+    return n > 0 ? n : 1;
   }
 };
 
