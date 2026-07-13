@@ -1,48 +1,47 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- REEMPLAZAR https://TUDOMINIO.com por el dominio real al publicar -->
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>https://TUDOMINIO.com/</loc>
+    <loc>https://bellasindependientes.com/</loc>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://TUDOMINIO.com/mujeres.html</loc>
+    <loc>https://bellasindependientes.com/mujeres.html</loc>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://TUDOMINIO.com/hombres.html</loc>
+    <loc>https://bellasindependientes.com/hombres.html</loc>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://TUDOMINIO.com/trans.html</loc>
+    <loc>https://bellasindependientes.com/trans.html</loc>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://TUDOMINIO.com/masajistas.html</loc>
+    <loc>https://bellasindependientes.com/masajistas.html</loc>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://TUDOMINIO.com/planes.html</loc>
+    <loc>https://bellasindependientes.com/planes.html</loc>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://TUDOMINIO.com/legal/aviso-legal.html</loc>
+    <loc>https://bellasindependientes.com/legal/aviso-legal.html</loc>
     <changefreq>monthly</changefreq>
     <priority>0.3</priority>
   </url>
   <url>
-    <loc>https://TUDOMINIO.com/legal/privacidad.html</loc>
+    <loc>https://bellasindependientes.com/legal/privacidad.html</loc>
     <changefreq>monthly</changefreq>
     <priority>0.3</priority>
   </url>
   <url>
-    <loc>https://TUDOMINIO.com/legal/condiciones.html</loc>
+    <loc>https://bellasindependientes.com/legal/condiciones.html</loc>
     <changefreq>monthly</changefreq>
     <priority>0.3</priority>
   </url>

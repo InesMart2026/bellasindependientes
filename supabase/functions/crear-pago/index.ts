@@ -105,7 +105,7 @@ Deno.serve(async (req) => {
     const siteUrl = Deno.env.get('SITE_URL')!;
     const pref = {
       items: [{
-        title: `Bellas Escort — ${pkg.nombre} de visibilidad`,
+        title: `Bellas Independientes — ${pkg.nombre} de visibilidad`,
         quantity: 1,
         unit_price: Number(pkg.precio_total),
         currency_id: 'ARS',

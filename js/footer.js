@@ -21,7 +21,7 @@
 
         <div class="footer-disclaimer">
           <p>
-            Bellas Escort es un directorio de anuncios. No somos una agencia de escorts ni
+            Bellas Independientes es un directorio de anuncios. No somos una agencia de escorts ni
             intermediamos entre usuarios y anunciantes. Las fotos, textos y anuncios
             son publicados bajo la exclusiva responsabilidad de los propios usuarios
             que los publican.
@@ -34,14 +34,14 @@
             contenido o imágenes prohibidas.
           </p>
 
-          <p class="footer-brand">Bellas Escort</p>
-          <p class="footer-legal-line">&copy; ${year} Bellas Escort — Todos los derechos reservados</p>
+          <p class="footer-brand">Bellas Independientes</p>
+          <p class="footer-legal-line">&copy; ${year} Bellas Independientes — Todos los derechos reservados</p>
 
           <div class="footer-badges">
             <span class="footer-badge">+18</span>
             <a class="footer-badge" href="https://www.rtalabel.org" target="_blank" rel="noopener">RTA · RESTRICTED TO ADULTS</a>
             <!--
-              BADGE ASACP: activar SOLO cuando Bellas Escort sea miembro afiliado de ASACP.
+              BADGE ASACP: activar SOLO cuando Bellas Independientes sea miembro afiliado de ASACP.
               Descargá el badge oficial desde tu panel de miembro en asacp.org
               (no desde Brandfetch), guardalo en /img/asacp.png y reemplazá este
               comentario por:
@@ -60,7 +60,7 @@
           </div>
           <div class="footer-stop-text">
             <p class="footer-stop-title">STOP HUMAN TRAFFICKING</p>
-            <p><strong>La trata de personas es aberrante.</strong> Bellas Escort trabaja
+            <p><strong>La trata de personas es aberrante.</strong> Bellas Independientes trabaja
             activamente para que su plataforma no sea usada por tratantes ni por
             quienes limiten la libertad de otros.</p>
             <p>Si vos o alguien que conocés necesita ayuda, llamá a la

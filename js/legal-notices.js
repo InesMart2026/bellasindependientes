@@ -104,7 +104,7 @@
     overlay.setAttribute('aria-labelledby', 'ecr-age-title');
     overlay.innerHTML = ''
       + '<div class="ecr-agegate__box">'
-      + '<p class="ecr-agegate__logo">Bellas Escort</p>'
+      + '<p class="ecr-agegate__logo">Bellas Independientes</p>'
       + '<h2 class="ecr-agegate__title" id="ecr-age-title">Contenido para adultos</h2>'
       + '<p class="ecr-agegate__text">Este sitio contiene material explícito destinado '
       + 'exclusivamente a personas mayores de 18 años. Al ingresar declarás bajo tu '
