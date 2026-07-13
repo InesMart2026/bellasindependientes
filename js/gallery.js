@@ -75,8 +75,9 @@ window.galleryHelpers = {
     return p ? p.nombre : slug;
   },
 
-  // Llena el <select> de provincia del filtro. Los 4 listados hacen lo mismo,
-  // así que vive acá y no repetido en cada página.
+  // Sin uso hoy: el filtro por provincia se sacó de los listados hasta que haya
+  // volumen (ver commit). Se mantiene junto con filterEscorts({ provincia })
+  // para reactivarlo agregando el <select> de vuelta, sin reescribir nada.
   async llenarSelectProvincias(selectId) {
     const sel = document.getElementById(selectId);
     if (!sel) return;

@@ -41,12 +41,6 @@
       <input type="text" id="filter-search" placeholder="Buscar por nombre o zona..." autocomplete="off">
     </div>
     <div class="filter-group">
-      <label>Provincia</label>
-      <select id="filter-provincia">
-        <option value="">Todas</option>
-      </select>
-    </div>
-    <div class="filter-group">
       <label>Edad</label>
       <input type="number" id="filter-edad-min" placeholder="Min" min="18" max="99">
       <span style="color:var(--text-secondary);">—</span>
@@ -85,22 +79,18 @@
 
         const grid = document.getElementById('escorts-grid');
 
-        // Antes del primer render: la tarjeta guarda el slug y necesita el
-        // catálogo para mostrar "Tucumán" en vez de "tucuman".
-        await galleryHelpers.llenarSelectProvincias('filter-provincia');
+        // La tarjeta guarda el slug de provincia: sin el catálogo mostraría
+        // "tucuman" en vez de "Tucumán".
+        await galleryHelpers.fetchProvincias();
 
         async function applyFilters() {
           const search = document.getElementById('filter-search').value;
-          const provincia = document.getElementById('filter-provincia').value;
           const edadMin = document.getElementById('filter-edad-min').value;
           const edadMax = document.getElementById('filter-edad-max').value;
           const sort = document.getElementById('filter-sort').value;
-          // La provincia NO cuenta como filtro: una provincia sin perfiles tiene
-          // que mostrar los espacios libres, no un "no hay nadie". Es donde más
-          // sentido tiene invitar a publicar.
           const hayFiltros = search || edadMin || edadMax || sort === 'nombre';
 
-          const filtered = galleryHelpers.filterEscorts(escorts, { search, provincia, edadMin, edadMax, sort });
+          const filtered = galleryHelpers.filterEscorts(escorts, { search, edadMin, edadMax, sort });
 
           // Sin filtros: grid de 12 slots con "Tu Espacio Aquí" en los vacíos.
           // Con filtros: solo los resultados que coinciden.
@@ -114,7 +104,6 @@
         }
 
         document.getElementById('filter-search').addEventListener('input', applyFilters);
-        document.getElementById('filter-provincia').addEventListener('change', applyFilters);
         document.getElementById('filter-edad-min').addEventListener('input', applyFilters);
         document.getElementById('filter-edad-max').addEventListener('input', applyFilters);
         document.getElementById('filter-sort').addEventListener('change', applyFilters);
