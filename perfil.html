@@ -55,6 +55,11 @@
         const photos = await galleryHelpers.fetchPhotos(escort.id);
         const portada = photos.find(p => p.es_portada) || photos[0];
 
+        // servicios se guarda como slugs del catálogo cerrado; acá se traducen
+        // a los nombres que ve el visitante.
+        const { data: catalogo } = await window.supabaseClient.rpc('get_servicios_catalogo');
+        const nombreServicio = new Map((catalogo || []).map(s => [s.slug, s.nombre]));
+
         const container = document.getElementById('profile-container');
 
         const esc = (s) => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -94,12 +99,18 @@
           ? `<div class="profile-rate"><span>Tarifa</span><strong>${fmtPrecio(escort.tarifa)} <small>/ hora</small></strong></div>`
           : '';
 
-        const chips = (str) => str
-          ? `<div class="profile-chips">${String(str).split(',').map(s => s.trim()).filter(Boolean).map(s => `<span class="chip">${esc(s)}</span>`).join('')}</div>`
+        const chips = (items) => items.length
+          ? `<div class="profile-chips">${items.map(s => `<span class="chip">${esc(s)}</span>`).join('')}</div>`
           : '';
 
-        const serviciosHtml = escort.servicios ? `<h3>Servicios</h3>${chips(escort.servicios)}` : '';
-        const idiomasHtml = escort.idiomas ? `<h3>Idiomas</h3>${chips(escort.idiomas)}` : '';
+        // Un slug sin traducción quedó fuera del catálogo (se desactivó): no se muestra.
+        const servicios = (escort.servicios || [])
+          .map(slug => nombreServicio.get(slug))
+          .filter(Boolean);
+        const idiomas = String(escort.idiomas || '').split(',').map(s => s.trim()).filter(Boolean);
+
+        const serviciosHtml = servicios.length ? `<h3>Servicios</h3>${chips(servicios)}` : '';
+        const idiomasHtml = idiomas.length ? `<h3>Idiomas</h3>${chips(idiomas)}` : '';
 
         container.innerHTML = `
           <div class="profile-hero">

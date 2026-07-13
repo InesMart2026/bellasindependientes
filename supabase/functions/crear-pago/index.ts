@@ -7,6 +7,7 @@
 //   SITE_URL          → https://tu-dominio (para back_urls y webhook)
 //   SB_URL            → URL del proyecto Supabase
 //   SB_SERVICE_ROLE   → service_role key (bypassa RLS para insertar el pago)
+//   SB_ANON_KEY       → anon key (para llamar RPCs como la escort, con su JWT)
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
@@ -59,7 +60,32 @@ Deno.serve(async (req) => {
       .single();
     if (!pkg) return json({ error: 'paquete inválido' }, 400);
 
-    // 3. Registrar el pago pendiente
+    // 3. Reafirmación de responsabilidad por este anuncio.
+    // Va ANTES de crear la preferencia: si no queda constancia, no hay checkout.
+    // Se llama con el JWT de la escort (no con service_role) porque la RPC
+    // resuelve la escort con auth.uid(); el service_role no tiene identidad.
+    const asEscort = createClient(
+      Deno.env.get('SB_URL')!,
+      Deno.env.get('SB_ANON_KEY')!,
+      { global: { headers: { Authorization: authHeader } } },
+    );
+
+    const { data: acuerdo, error: acuerdoErr } = await asEscort.rpc('accept_ad_terms', {
+      p_package_id: pkg.id,
+      p_ip: req.headers.get('x-forwarded-for'),
+      p_user_agent: req.headers.get('user-agent'),
+    });
+
+    if (acuerdoErr || !acuerdo?.ok) {
+      // Términos nuevos sin firmar → la mandamos a re-aceptarlos, no a pagar.
+      if (acuerdo?.error === 'terminos_desactualizados') {
+        return json({ error: 'terminos_desactualizados' }, 409);
+      }
+      console.error('accept_ad_terms:', acuerdoErr ?? acuerdo);
+      return json({ error: 'no se pudo registrar la aceptación de los términos' }, 400);
+    }
+
+    // 4. Registrar el pago pendiente
     // Un paquete dura días u horas (constraint en packages), nunca ambos.
     const { data: pago, error: pagoErr } = await admin
       .from('pagos')
@@ -75,7 +101,7 @@ Deno.serve(async (req) => {
       .single();
     if (pagoErr || !pago) return json({ error: 'no se pudo registrar el pago' }, 500);
 
-    // 4. Crear la preferencia en MercadoPago
+    // 5. Crear la preferencia en MercadoPago
     const siteUrl = Deno.env.get('SITE_URL')!;
     const pref = {
       items: [{

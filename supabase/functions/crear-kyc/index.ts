@@ -36,7 +36,7 @@ Deno.serve(async (req) => {
 
     const { data: escort } = await admin
       .from('escorts')
-      .select('id, estado_verificacion, acuerdo_legal, bloqueada')
+      .select('id, estado_verificacion, acuerdo_legal, acuerdo_legal_version, bloqueada')
       .eq('user_id', user.id)
       .single();
     if (!escort) return json({ error: 'primero completá tus datos' }, 400);
@@ -50,9 +50,12 @@ Deno.serve(async (req) => {
     if (escort.estado_verificacion === 'verificado') {
       return json({ error: 'tu identidad ya está verificada' }, 409);
     }
-    // Debe haber aceptado el acuerdo legal antes de subir documentos.
-    if (!escort.acuerdo_legal) {
-      return json({ error: 'debés aceptar el acuerdo legal primero' }, 400);
+    // Debe haber aceptado el acuerdo legal VIGENTE antes de subir documentos.
+    // Haber firmado una versión anterior no habilita: los términos cambiaron.
+    const { data: vigente } = await admin.rpc('terminos_vigentes').maybeSingle();
+
+    if (!escort.acuerdo_legal || escort.acuerdo_legal_version !== vigente?.version) {
+      return json({ error: 'debés aceptar el acuerdo legal vigente primero' }, 400);
     }
 
     // Gate de lista negra: si el DNI cargado está vetado, se bloquea el

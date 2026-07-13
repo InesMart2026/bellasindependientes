@@ -121,3 +121,49 @@
   .dashboard-layout { grid-template-columns: 1fr; }
   .dashboard-sidebar { display: none; }
 }
+
+/* Servicios: checkbox nativo oculto, la pill es la superficie clickeable.
+   El input sigue existiendo → foco por teclado y lectores de pantalla. */
+.servicio-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: .5rem .9rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  cursor: pointer;
+  user-select: none;
+  transition: border-color .15s ease, background-color .15s ease, color .15s ease;
+}
+
+/* Anula el estilo de campo de texto que .form-group input le impone. */
+.servicio-chip input {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: 0;
+}
+
+.servicio-chip span {
+  color: var(--text-secondary);
+  font-size: .9rem;
+  line-height: 1;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.servicio-chip:hover { border-color: var(--gold); }
+
+.servicio-chip:has(input:checked) {
+  background: rgba(212, 175, 55, .12);
+  border-color: var(--gold);
+}
+
+.servicio-chip:has(input:checked) span { color: var(--gold); }
+
+.servicio-chip:has(input:focus-visible) {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+}

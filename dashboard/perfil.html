@@ -9,6 +9,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="/js/supabase.js"></script>
   <script src="/js/auth.js" defer></script>
+  <script src="/js/gallery.js" defer></script>
 </head>
 <body>
   <div class="dashboard-layout">
@@ -104,8 +105,11 @@
         </div>
 
         <div class="form-group">
-          <label>Servicios (separados por coma)</label>
-          <input type="text" id="servicios" placeholder="Ej: Masajes, Videollamadas, Packs">
+          <label>Servicios</label>
+          <p style="font-size:.85rem;color:var(--text-secondary);margin:-.35rem 0 .75rem;">
+            Elegí lo que ofrecés. Solo se publican estas opciones.
+          </p>
+          <div id="servicios-box"></div>
         </div>
 
         <div class="form-group">
@@ -134,9 +138,12 @@
       const user = await authHelpers.requireAuth();
       if (!user) return;
 
-      const { data: escort } = await window.supabaseClient
-        .rpc('get_my_profile')
-        .maybeSingle();
+      const [{ data: escort }, { data: catalogo }] = await Promise.all([
+        window.supabaseClient.rpc('get_my_profile').maybeSingle(),
+        window.supabaseClient.rpc('get_servicios_catalogo'),
+      ]);
+
+      renderServicios(catalogo || [], escort?.servicios || []);
 
       if (escort) {
         document.getElementById('nombre').value = escort.nombre || '';
@@ -154,7 +161,6 @@
         document.getElementById('altura').value = escort.altura || '';
         document.getElementById('ojos').value = escort.ojos || '';
         document.getElementById('cabello').value = escort.cabello || '';
-        document.getElementById('servicios').value = escort.servicios || '';
         document.getElementById('idiomas').value = escort.idiomas || '';
       }
 
@@ -178,20 +184,55 @@
           altura: parseInt(document.getElementById('altura').value) || null,
           ojos: val('ojos'),
           cabello: val('cabello'),
-          servicios: val('servicios'),
+          servicios: serviciosElegidos(),
           idiomas: val('idiomas'),
           user_id: user.id
         };
 
-        if (escort) {
-          await window.supabaseClient.from('escorts').update(formData).eq('id', escort.id);
-        } else {
-          await window.supabaseClient.from('escorts').insert(formData);
+        const { error } = escort
+          ? await window.supabaseClient.from('escorts').update(formData).eq('id', escort.id)
+          : await window.supabaseClient.from('escorts').insert(formData);
+
+        // El trigger validate_servicios rechaza cualquier servicio fuera del
+        // catálogo. Sin este chequeo el guardado fallaba en silencio.
+        if (error) {
+          alert('No se pudo guardar el perfil: ' + error.message);
+          return;
         }
 
         alert('Perfil guardado correctamente');
         window.location.href = '/dashboard/';
       });
+
+      // Pinta el catálogo agrupado y marca lo que la escort ya tenía elegido.
+      // El catálogo lo carga un admin, pero igual se escapa: nada que venga de
+      // la DB entra crudo a innerHTML.
+      function renderServicios(catalogo, elegidos) {
+        const box = document.getElementById('servicios-box');
+        const esc = window.galleryHelpers.escapeHtml;
+        const titulos = { modalidad: 'Modalidad', extras: 'Extras' };
+        const grupos = [...new Set(catalogo.map(s => s.grupo))];
+
+        box.innerHTML = grupos.map(grupo => `
+          <p style="font-size:.75rem;letter-spacing:.08em;text-transform:uppercase;color:var(--text-secondary);margin:.85rem 0 .5rem;">
+            ${esc(titulos[grupo] || grupo)}
+          </p>
+          <div style="display:flex;flex-wrap:wrap;gap:.5rem;">
+            ${catalogo.filter(s => s.grupo === grupo).map(s => `
+              <label class="servicio-chip">
+                <input type="checkbox" name="servicio" value="${esc(s.slug)}"
+                       ${elegidos.includes(s.slug) ? 'checked' : ''}>
+                <span>${esc(s.nombre)}</span>
+              </label>
+            `).join('')}
+          </div>
+        `).join('');
+      }
+
+      function serviciosElegidos() {
+        return [...document.querySelectorAll('input[name="servicio"]:checked')]
+          .map(el => el.value);
+      }
     });
   </script>
 </body>

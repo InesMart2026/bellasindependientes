@@ -609,6 +609,60 @@ a.footer-badge:hover { color: var(--gold); border-color: var(--gold); }
   .plans-grid { grid-template-columns: 1fr; }
 }
 
+/* ── Reafirmación de responsabilidad al contratar ── */
+.plans-consent {
+  max-width: 1100px;
+  margin: 0 auto 2rem;
+  padding: 1.25rem 1.5rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--gold);
+  border-radius: 4px;
+}
+
+.plans-consent-title {
+  font-family: var(--font-display);
+  font-size: 1rem;
+  margin-bottom: .75rem;
+}
+
+.plans-consent label {
+  display: flex;
+  gap: .75rem;
+  align-items: flex-start;
+  cursor: pointer;
+}
+
+.plans-consent input {
+  margin-top: .2rem;
+  flex-shrink: 0;
+  width: 1.1rem;
+  height: 1.1rem;
+  accent-color: var(--gold);
+  cursor: pointer;
+}
+
+.plans-consent span {
+  color: var(--text-secondary);
+  font-size: .9rem;
+  line-height: 1.55;
+}
+
+/* Intentó pagar sin tildar: el borde no alcanza como única señal. */
+.plans-consent.is-missing {
+  border-color: var(--gold);
+  background: rgba(212, 175, 55, .07);
+}
+
+.plans-consent.is-missing::after {
+  content: 'Tenés que aceptar esta declaración para contratar.';
+  display: block;
+  margin-top: .6rem;
+  padding-left: 1.85rem;
+  color: var(--gold);
+  font-size: .85rem;
+}
+
 /* ── Pago por horas ── */
 .hours-card {
   max-width: 1100px;

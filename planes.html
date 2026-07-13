@@ -33,6 +33,16 @@
     Cuantos más días contratás, menor es el precio por día. Si necesitás menos, pagás por hora.
   </p>
 
+  <!-- Reafirmación por anuncio: cada publicación se firma aparte, no alcanza
+       con el acuerdo del alta. El texto lo trae la versión vigente de la DB. -->
+  <div class="plans-consent" id="plans-consent" hidden>
+    <p class="plans-consent-title">Antes de publicar, confirmá:</p>
+    <label>
+      <input type="checkbox" id="consent-check">
+      <span id="consent-text"></span>
+    </label>
+  </div>
+
   <div class="plans-grid" id="plans-container"></div>
 
   <section class="hours-card" id="hours-card" hidden>
@@ -66,11 +76,23 @@
     document.addEventListener('DOMContentLoaded', async () => {
       const container = document.getElementById('plans-container');
 
-      const { data: packages, error } = await window.supabaseClient
-        .from('packages')
-        .select('*')
-        .eq('activo', true)
-        .order('orden', { ascending: true });
+      const [{ data: packages, error }, { data: terminos }] = await Promise.all([
+        window.supabaseClient
+          .from('packages')
+          .select('*')
+          .eq('activo', true)
+          .order('orden', { ascending: true }),
+        window.supabaseClient.rpc('terminos_vigentes').maybeSingle(),
+      ]);
+
+      if (terminos?.texto) {
+        const consent = document.getElementById('plans-consent');
+        document.getElementById('consent-text').textContent = terminos.texto;
+        consent.hidden = false;
+        document.getElementById('consent-check').addEventListener('change', (e) => {
+          if (e.target.checked) consent.classList.remove('is-missing');
+        });
+      }
 
       if (error || !packages?.length) {
         container.innerHTML =
@@ -175,13 +197,22 @@
         return;
       }
 
+      // Gate de UX. La barrera real es accept_ad_terms en el servidor: sin
+      // constancia firmada, crear-pago no genera la preferencia.
+      const consent = document.getElementById('consent-check');
+      if (!consent.checked) {
+        document.getElementById('plans-consent').classList.add('is-missing');
+        consent.focus();
+        return;
+      }
+
       btn.disabled = true;
       const original = btn.textContent;
       btn.textContent = 'Redirigiendo...';
 
       try {
-        // La Edge Function crea la preferencia de MercadoPago y devuelve
-        // el init_point (URL del checkout). Nunca activamos el slot acá.
+        // La Edge Function registra la reafirmación, crea la preferencia de
+        // MercadoPago y devuelve el init_point. Nunca activamos el slot acá.
         const { data, error } = await window.supabaseClient.functions.invoke(
           'crear-pago',
           { body: { package_id: packageId } }
@@ -192,7 +223,25 @@
         console.error('Error al iniciar el pago:', err);
         btn.disabled = false;
         btn.textContent = original;
-        alert('No se pudo iniciar el pago. Verificá que tengas un perfil creado e intentá de nuevo.');
+
+        // invoke() no expone el body del error: hay que leerlo del response.
+        const motivo = await leerError(err);
+
+        if (motivo === 'terminos_desactualizados') {
+          alert('Actualizamos los términos y condiciones. Aceptá la nueva versión antes de contratar.');
+          window.location.href = '/dashboard/verificacion.html';
+          return;
+        }
+        alert('No se pudo iniciar el pago. Verificá que tengas un perfil creado y verificado, e intentá de nuevo.');
+      }
+    }
+
+    async function leerError(err) {
+      try {
+        const body = await err?.context?.json();
+        return body?.error ?? null;
+      } catch {
+        return null;
       }
     }
   </script>

@@ -79,12 +79,9 @@
         <div class="form-group" style="margin-top:1rem;">
           <label style="display:flex;gap:.6rem;align-items:flex-start;cursor:pointer;font-weight:400;">
             <input type="checkbox" id="acuerdo" required style="margin-top:.25rem;width:auto;">
-            <span style="font-size:.9rem;color:var(--text-secondary);">
-              Declaro bajo juramento que soy mayor de 18 años, que los datos y
-              las imágenes que publico son propios y verídicos, y que soy la
-              única responsable del contenido de mi anuncio. Acepto los términos
-              y condiciones del sitio.
-            </span>
+            <!-- El texto lo pone la versión vigente de la DB: lo que ella lee es
+                 exactamente lo que queda archivado en la constancia. -->
+            <span id="acuerdo-texto" style="font-size:.9rem;color:var(--text-secondary);"></span>
           </label>
         </div>
 
@@ -113,9 +110,13 @@
       const formEl   = document.getElementById('legal-form');
       const kycStep  = document.getElementById('kyc-step');
 
-      // 1. Cargar perfil (datos legales previos + estado)
-      const { data: profile } = await window.supabaseClient
-        .rpc('get_my_profile').maybeSingle();
+      // 1. Cargar perfil (datos legales previos + estado) y los términos vigentes
+      const [{ data: profile }, { data: terminos }] = await Promise.all([
+        window.supabaseClient.rpc('get_my_profile').maybeSingle(),
+        window.supabaseClient.rpc('terminos_vigentes').maybeSingle(),
+      ]);
+
+      document.getElementById('acuerdo-texto').textContent = terminos?.texto || '';
 
       if (!profile) {
         bannerEl.innerHTML = `
@@ -139,10 +140,27 @@
       // Pre-cargar provincia/localidad/acuerdo (los sensibles NO se re-exponen)
       document.getElementById('provincia').value = profile.provincia || '';
       document.getElementById('localidad').value = profile.localidad || '';
-      document.getElementById('acuerdo').checked  = !!profile.acuerdo_legal;
 
-      // Si ya aceptó el acuerdo, mostrar directamente el paso de KYC
-      if (profile.acuerdo_legal) kycStep.style.display = 'block';
+      // Aceptar una vez no alcanza: si los términos cambiaron, lo que firmó ya
+      // no es lo que rige. El check vuelve a cero y tiene que firmar la nueva versión.
+      const alDia = profile.acuerdo_legal &&
+        profile.acuerdo_legal_version === profile.terminos_vigentes_version;
+
+      document.getElementById('acuerdo').checked = alDia;
+
+      if (profile.acuerdo_legal && !alDia) {
+        bannerEl.insertAdjacentHTML('beforeend', `
+          <div class="plan-card" style="text-align:left;margin-bottom:1.5rem;border-color:var(--gold);">
+            <p style="color:var(--gold);font-size:1.05rem;margin-bottom:.35rem;">● Términos actualizados</p>
+            <p style="color:var(--text-secondary);font-size:.9rem;">
+              Cambiamos los términos desde la última vez que los aceptaste.
+              Leelos abajo y volvé a aceptarlos para seguir publicando.
+            </p>
+          </div>`);
+      }
+
+      // Solo pasa al KYC si su aceptación está al día.
+      if (alDia) kycStep.style.display = 'block';
 
       // 2. Guardar datos legales
       formEl.addEventListener('submit', async (e) => {
@@ -166,18 +184,27 @@
           direccion:   val('direccion'),
           provincia:   val('provincia'),
           localidad:   val('localidad'),
-          acuerdo_legal: true,
-          acuerdo_legal_at: new Date().toISOString(),
+        };
+
+        const fallar = (msg) => {
+          alert(msg);
+          btn.disabled = false;
+          btn.textContent = 'Guardar datos';
         };
 
         const { error } = await window.supabaseClient
           .from('escorts').update(payload).eq('user_id', user.id);
 
-        if (error) {
-          alert('No se pudieron guardar los datos. Revisá que estén completos.');
-          btn.disabled = false;
-          btn.textContent = 'Guardar datos';
-          return;
+        if (error) return fallar('No se pudieron guardar los datos. Revisá que estén completos.');
+
+        // La aceptación no se escribe desde el navegador: las columnas están
+        // congeladas. El servidor pone la fecha y la versión, y archiva la
+        // constancia con el texto exacto que ella firmó.
+        const { data: acuerdo, error: errAcuerdo } =
+          await window.supabaseClient.rpc('accept_terms');
+
+        if (errAcuerdo || !acuerdo?.ok) {
+          return fallar('No se pudo registrar la aceptación de los términos. Intentá de nuevo.');
         }
 
         btn.disabled = false;
