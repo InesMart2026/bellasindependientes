@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Denuncias — Admin Bellas Escort</title>
+  <title>Denuncias — Admin Bellas Independientes</title>
   <meta name="robots" content="noindex,nofollow">
   <link rel="stylesheet" href="/css/style.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -46,6 +46,9 @@
     .btn-sm:disabled { opacity: .5; cursor: default; }
     .chk-row { display: flex; align-items: center; gap: .4rem; font-size: .8rem; color: var(--text-secondary); margin-right: auto; }
     .chk-row input { width: auto; }
+    .link-row { display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; margin-right: auto; }
+    .link-row .unlinked { font-size: .8rem; color: var(--danger); flex-basis: 100%; }
+    .link-row .slug-input { width: 200px; padding: .5rem .6rem; font-size: .82rem; }
     .empty { text-align: center; color: var(--text-secondary); padding: 3rem 1rem; }
     .logout { background: none; border: none; color: var(--text-secondary); cursor: pointer; font-size: .85rem; text-decoration: underline; width: auto; }
   </style>
@@ -53,7 +56,7 @@
 <body>
   <!-- Puerta de acceso: pide la clave admin. Nunca se hardcodea. -->
   <div id="gate" class="admin-gate">
-    <a href="/" class="header-logo" style="display:block;text-align:center;margin-bottom:1.5rem;">Bellas Escort</a>
+    <a href="/" class="header-logo" style="display:block;text-align:center;margin-bottom:1.5rem;">Bellas Independientes</a>
     <h2 style="text-align:center;margin-bottom:1rem;">Panel de denuncias</h2>
     <p>Ingresá la clave de administración. Se guarda solo en esta pestaña y se borra al cerrarla.</p>
     <div id="gate-msg" class="msg"></div>
@@ -203,15 +206,26 @@
       const canAct = (r.estado === 'nueva' || r.estado === 'en_revision');
       const hasEscort = !!r.escort_id;
 
-      const acciones = canAct ? `
+      // Sin escort_id no se puede bloquear: el denunciante escribió un nombre
+      // o una URL que no resolvió a ningún perfil. En vez de dejar botones
+      // muertos, se le pide al admin el slug — él sí puede mirar el caso.
+      const acciones = !canAct ? '' : `
         <div class="report-actions" data-id="${esc(r.id)}" data-escort="${esc(r.escort_id || '')}" data-cat="${esc(r.categoria)}">
-          <label class="chk-row">
-            <input type="checkbox" class="chk-blacklist" ${hasEscort ? 'checked' : 'disabled'}>
-            Vetar DNI (lista negra)
-          </label>
-          <button class="btn-sm btn-block" ${hasEscort ? '' : 'disabled title="La denuncia no está ligada a un perfil"'}>Bloquear perfil</button>
+          ${hasEscort ? `
+            <label class="chk-row">
+              <input type="checkbox" class="chk-blacklist" checked>
+              Vetar DNI (lista negra)
+            </label>
+            <button class="btn-sm btn-block">Bloquear perfil</button>
+          ` : `
+            <div class="link-row">
+              <span class="unlinked">Sin perfil identificado — indicá el slug para poder bloquearlo:</span>
+              <input type="text" class="slug-input" placeholder="slug del perfil" value="${esc(r.slug || '')}">
+              <button class="btn-sm btn-link">Ligar perfil</button>
+            </div>
+          `}
           <button class="btn-sm btn-dismiss">Descartar</button>
-        </div>` : '';
+        </div>`;
 
       return `
         <div class="report ${prio ? 'prio' : ''}">
@@ -253,6 +267,27 @@
           loadReports();
         } else {
           showMsg(msg, data.error || 'No se pudo bloquear.', 'err');
+          setBusy(box, false);
+        }
+      }
+
+      if (e.target.classList.contains('btn-link')) {
+        const slug = box.querySelector('.slug-input').value.trim();
+        if (!slug) {
+          showMsg(msg, 'Escribí el slug del perfil denunciado.', 'err');
+          return;
+        }
+        setBusy(box, true);
+        const { status, data } = await callFn('/admin-bloquear', {
+          accion: 'ligar',
+          report_id: reportId,
+          slug,
+        });
+        if (status === 200 && data.ok) {
+          showMsg(msg, 'Perfil identificado. Ya podés bloquearlo.', 'ok');
+          loadReports();
+        } else {
+          showMsg(msg, data.error || 'No se pudo ligar la denuncia.', 'err');
           setBusy(box, false);
         }
       }

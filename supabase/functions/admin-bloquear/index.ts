@@ -53,6 +53,24 @@ Deno.serve(async (req) => {
       return json(data ?? { ok: true });
     }
 
+    // Acción "ligar": la denuncia entró sin perfil resuelto (el denunciante
+    // escribió un nombre ambiguo o mal). El admin indica el slug correcto.
+    if (accion === 'ligar') {
+      const slug = typeof body.slug === 'string' ? body.slug.trim() : '';
+      if (!reportId || !slug) {
+        return json({ error: 'report_id y slug son obligatorios' }, 400);
+      }
+      const { data, error } = await admin.rpc('link_report_to_escort', {
+        report_id_param: reportId,
+        slug_param: slug,
+      });
+      if (error) {
+        console.error('link_report_to_escort error:', error);
+        return json({ error: 'no se pudo ligar la denuncia' }, 500);
+      }
+      return json(data ?? { ok: true });
+    }
+
     // Acción "bloquear" (default): despublica y opcionalmente veta el DNI.
     const escortId = typeof body.escort_id === 'string' ? body.escort_id : '';
     const motivo = typeof body.motivo === 'string' ? body.motivo.trim() : '';
