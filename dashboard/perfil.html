@@ -57,8 +57,10 @@
             <input type="number" id="edad" min="18" max="99">
           </div>
           <div class="form-group">
-            <label>Ubicación</label>
-            <input type="text" id="ubicacion" placeholder="Ej: Buenos Aires">
+            <label>Provincia donde te publicás</label>
+            <select id="ubicacion" required>
+              <option value="">Elegí una provincia</option>
+            </select>
           </div>
         </div>
 
@@ -138,12 +140,15 @@
       const user = await authHelpers.requireAuth();
       if (!user) return;
 
-      const [{ data: escort }, { data: catalogo }] = await Promise.all([
+      const [{ data: escort }, { data: catalogo }, { data: provincias }] = await Promise.all([
         window.supabaseClient.rpc('get_my_profile').maybeSingle(),
         window.supabaseClient.rpc('get_servicios_catalogo'),
+        window.supabaseClient.rpc('get_provincias_catalogo'),
       ]);
 
       renderServicios(catalogo || [], escort?.servicios || []);
+      // Antes de asignar el valor guardado: un <select> vacío ignora el .value.
+      renderProvincias(provincias || []);
 
       if (escort) {
         document.getElementById('nombre').value = escort.nombre || '';
@@ -232,6 +237,18 @@
       function serviciosElegidos() {
         return [...document.querySelectorAll('input[name="servicio"]:checked')]
           .map(el => el.value);
+      }
+
+      // La provincia se guarda como slug ('tucuman'), no como nombre visible:
+      // el trigger validate_ubicacion solo acepta slugs del catálogo.
+      function renderProvincias(lista) {
+        const sel = document.getElementById('ubicacion');
+        lista.forEach(p => {
+          const opt = document.createElement('option');
+          opt.value = p.slug;
+          opt.textContent = p.nombre;
+          sel.appendChild(opt);
+        });
       }
     });
   </script>

@@ -58,6 +58,37 @@ window.galleryHelpers = {
     return data || { url: '/img/sin-foto.svg' };
   },
 
+  // Cache del catálogo: la tarjeta guarda el slug ('tucuman') pero muestra el
+  // nombre ('Tucumán'). Se pide una vez, no una por tarjeta.
+  _provincias: null,
+
+  async fetchProvincias() {
+    if (this._provincias) return this._provincias;
+    const { data, error } = await window.supabaseClient.rpc('get_provincias_catalogo');
+    this._provincias = error ? [] : (data || []);
+    return this._provincias;
+  },
+
+  nombreProvincia(slug) {
+    if (!slug) return '';
+    const p = (this._provincias || []).find(x => x.slug === slug);
+    return p ? p.nombre : slug;
+  },
+
+  // Llena el <select> de provincia del filtro. Los 4 listados hacen lo mismo,
+  // así que vive acá y no repetido en cada página.
+  async llenarSelectProvincias(selectId) {
+    const sel = document.getElementById(selectId);
+    if (!sel) return;
+    const provincias = await this.fetchProvincias();
+    provincias.forEach(p => {
+      const opt = document.createElement('option');
+      opt.value = p.slug;
+      opt.textContent = p.nombre;
+      sel.appendChild(opt);
+    });
+  },
+
   renderCard(escort, portadaUrl) {
     const esc = this.escapeHtml;
     const div = document.createElement('a');
@@ -65,12 +96,14 @@ window.galleryHelpers = {
     // slug va en un atributo URL: encodeURIComponent evita romper el href / inyectar.
     div.href = `/perfil.html?slug=${encodeURIComponent(escort.slug)}`;
     const edad = Number.isInteger(escort.edad) ? ', ' + escort.edad : '';
+    const lugar = [escort.zona, this.nombreProvincia(escort.ubicacion)]
+      .filter(Boolean).join(', ');
     div.innerHTML = `
       <img class="card-img" src="${esc(portadaUrl)}" alt="${esc(escort.nombre)}" loading="lazy">
       <span class="card-badge">${esc(escort.categoria)}</span>
       <div class="card-body">
         <h3>${esc(escort.nombre)}${edad}</h3>
-        <p>${esc(escort.ubicacion || '')}</p>
+        <p>${esc(lugar)}</p>
       </div>
     `;
     return div;
@@ -116,14 +149,18 @@ window.galleryHelpers = {
     if (lb) lb.classList.remove('active');
   },
 
-  filterEscorts(escorts, { search, edadMin, edadMax, sort } = {}) {
+  filterEscorts(escorts, { search, edadMin, edadMax, sort, provincia } = {}) {
     let filtered = escorts ? [...escorts] : [];
+
+    if (provincia) {
+      filtered = filtered.filter(e => e.ubicacion === provincia);
+    }
 
     if (search) {
       const q = search.toLowerCase();
       filtered = filtered.filter(e =>
         (e.nombre || '').toLowerCase().includes(q) ||
-        (e.ubicacion || '').toLowerCase().includes(q)
+        (e.zona || '').toLowerCase().includes(q)
       );
     }
 

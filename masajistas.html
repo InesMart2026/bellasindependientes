@@ -38,7 +38,13 @@
   <div class="filter-bar">
     <div class="filter-search">
       <span class="search-icon">&#x1F50D;</span>
-      <input type="text" id="filter-search" placeholder="Buscar por nombre o ubicación..." autocomplete="off">
+      <input type="text" id="filter-search" placeholder="Buscar por nombre o zona..." autocomplete="off">
+    </div>
+    <div class="filter-group">
+      <label>Provincia</label>
+      <select id="filter-provincia">
+        <option value="">Todas</option>
+      </select>
     </div>
     <div class="filter-group">
       <label>Edad</label>
@@ -79,14 +85,19 @@
 
         const grid = document.getElementById('escorts-grid');
 
+        // Antes del primer render: la tarjeta guarda el slug y necesita el
+        // catálogo para mostrar "Tucumán" en vez de "tucuman".
+        await galleryHelpers.llenarSelectProvincias('filter-provincia');
+
         async function applyFilters() {
           const search = document.getElementById('filter-search').value;
+          const provincia = document.getElementById('filter-provincia').value;
           const edadMin = document.getElementById('filter-edad-min').value;
           const edadMax = document.getElementById('filter-edad-max').value;
           const sort = document.getElementById('filter-sort').value;
-          const hayFiltros = search || edadMin || edadMax || sort === 'nombre';
+          const hayFiltros = search || provincia || edadMin || edadMax || sort === 'nombre';
 
-          const filtered = galleryHelpers.filterEscorts(escorts, { search, edadMin, edadMax, sort });
+          const filtered = galleryHelpers.filterEscorts(escorts, { search, provincia, edadMin, edadMax, sort });
 
           // Sin filtros: grid de 12 slots con "Tu Espacio Aquí" en los vacíos.
           // Con filtros: solo los resultados que coinciden.
@@ -100,6 +111,7 @@
         }
 
         document.getElementById('filter-search').addEventListener('input', applyFilters);
+        document.getElementById('filter-provincia').addEventListener('change', applyFilters);
         document.getElementById('filter-edad-min').addEventListener('input', applyFilters);
         document.getElementById('filter-edad-max').addEventListener('input', applyFilters);
         document.getElementById('filter-sort').addEventListener('change', applyFilters);

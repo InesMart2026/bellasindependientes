@@ -104,6 +104,9 @@
     document.addEventListener('DOMContentLoaded', async () => {
       try {
         const escorts = await galleryHelpers.fetchEscorts();
+        // La tarjeta guarda el slug de provincia: sin el catálogo mostraría
+        // "tucuman" en vez de "Tucumán".
+        await galleryHelpers.fetchProvincias();
 
         const destacadas = escorts.filter(e => e.destacada).slice(0, 6);
         const resto = escorts.filter(e => !e.destacada).slice(0, 12);

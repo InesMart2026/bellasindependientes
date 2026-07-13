@@ -55,10 +55,16 @@
         const photos = await galleryHelpers.fetchPhotos(escort.id);
         const portada = photos.find(p => p.es_portada) || photos[0];
 
-        // servicios se guarda como slugs del catálogo cerrado; acá se traducen
-        // a los nombres que ve el visitante.
-        const { data: catalogo } = await window.supabaseClient.rpc('get_servicios_catalogo');
+        // servicios y ubicación se guardan como slugs de catálogos cerrados;
+        // acá se traducen a los nombres que ve el visitante.
+        const [{ data: catalogo }, { data: provincias }] = await Promise.all([
+          window.supabaseClient.rpc('get_servicios_catalogo'),
+          window.supabaseClient.rpc('get_provincias_catalogo'),
+        ]);
         const nombreServicio = new Map((catalogo || []).map(s => [s.slug, s.nombre]));
+        const nombreProvincia = new Map((provincias || []).map(p => [p.slug, p.nombre]));
+        const provincia = nombreProvincia.get(escort.ubicacion) || '';
+        const lugar = [escort.zona, provincia].filter(Boolean).join(', ');
 
         const container = document.getElementById('profile-container');
 
@@ -87,6 +93,7 @@
           ['Nacionalidad', escort.nacionalidad],
           ['Ojos', escort.ojos],
           ['Cabello', escort.cabello],
+          ['Provincia', provincia],
           ['Zona', escort.zona],
           ['Horario', escort.horario],
         ].filter(([, v]) => v);
@@ -119,7 +126,7 @@
               <h1>${esc(escort.nombre)}${escort.edad ? ', ' + escort.edad : ''}</h1>
               <div class="profile-meta">
                 <span>${esc(escort.categoria)}</span>
-                ${escort.zona ? `<span>${esc(escort.zona)}</span>` : (escort.ubicacion ? `<span>${esc(escort.ubicacion)}</span>` : '')}
+                ${lugar ? `<span>${esc(lugar)}</span>` : ''}
               </div>
             </div>
           </div>
