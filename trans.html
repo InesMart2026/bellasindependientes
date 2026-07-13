@@ -95,7 +95,10 @@
           const edadMin = document.getElementById('filter-edad-min').value;
           const edadMax = document.getElementById('filter-edad-max').value;
           const sort = document.getElementById('filter-sort').value;
-          const hayFiltros = search || provincia || edadMin || edadMax || sort === 'nombre';
+          // La provincia NO cuenta como filtro: una provincia sin perfiles tiene
+          // que mostrar los espacios libres, no un "no hay nadie". Es donde más
+          // sentido tiene invitar a publicar.
+          const hayFiltros = search || edadMin || edadMax || sort === 'nombre';
 
           const filtered = galleryHelpers.filterEscorts(escorts, { search, provincia, edadMin, edadMax, sort });
 
