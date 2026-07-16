@@ -126,7 +126,22 @@
       renderBanner(estado);
 
       if (estado === 'verificado') {
+        // Ya verificada: no tiene sentido mostrarle de nuevo el formulario de
+        // datos. Se le muestra el camino que sigue — cargar fotos y contratar
+        // un paquete — con accesos directos, para que no quede varada.
         formEl.style.display = 'none';
+        bannerEl.insertAdjacentHTML('beforeend', `
+          <div class="plan-card" style="text-align:left;">
+            <p style="font-size:1.05rem;margin-bottom:.75rem;">Ya podés publicar tu perfil</p>
+            <p style="color:var(--text-secondary);font-size:.9rem;margin-bottom:1.25rem;">
+              Tu identidad está verificada. Cargá tus fotos y contratá un
+              paquete para aparecer en el listado.
+            </p>
+            <div style="display:flex;gap:.75rem;flex-wrap:wrap;">
+              <a href="/dashboard/fotos.html" class="btn btn-gold">Cargar fotos</a>
+              <a href="/dashboard/plan.html" class="btn btn-outline">Contratar un paquete</a>
+            </div>
+          </div>`);
         return;
       }
 

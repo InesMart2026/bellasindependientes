@@ -31,6 +31,9 @@
         <h2>Mis Fotos</h2>
       </div>
 
+      <!-- Gate de verificación: sin identidad verificada no se cargan fotos. -->
+      <div id="verif-gate" style="display:none;" class="plan-card"></div>
+
       <!-- Gate de consentimiento: sin esta declaración no se puede subir. -->
       <div id="consent-gate" style="display:none;background:var(--card,#1a1a1a);border:1px solid var(--border,#333);border-radius:12px;padding:1.5rem;max-width:640px;margin-bottom:1.5rem;">
         <h3 style="margin:0 0 .75rem;">Antes de subir fotos</h3>
@@ -71,6 +74,30 @@
       const escort = rows && rows[0];
 
       if (!escort) { window.location.href = '/dashboard/perfil.html'; return; }
+
+      // ── Gate de verificación ─────────────────────────────────
+      // El flujo exige verificar identidad antes de cargar fotos. Sin esto,
+      // una cuenta sin verificar podría subir imágenes. Si no está verificada
+      // se corta acá: no se muestra ni el consentimiento ni el área de subida.
+      const verifGate = document.getElementById('verif-gate');
+      if (escort.estado_verificacion !== 'verificado') {
+        const enProceso = escort.estado_verificacion === 'en_revision';
+        verifGate.style.display = 'block';
+        verifGate.style.textAlign = 'left';
+        verifGate.style.borderColor = 'var(--gold)';
+        verifGate.style.maxWidth = '640px';
+        verifGate.innerHTML = `
+          <p style="color:var(--gold);font-size:1.1rem;margin-bottom:.5rem;">Verificá tu identidad primero</p>
+          <p style="color:var(--text-secondary);font-size:.9rem;margin-bottom:1rem;">
+            ${enProceso
+              ? 'Tu verificación está en proceso. Cuando se apruebe vas a poder cargar tus fotos.'
+              : 'Para cargar fotos tenés que verificar tu identidad (DNI + selfie). Es un requisito legal y se hace una sola vez.'}
+          </p>
+          <a href="/dashboard/verificacion.html" class="btn btn-gold" style="display:inline-block;">
+            ${enProceso ? 'Ver estado de verificación' : 'Verificar identidad'}
+          </a>`;
+        return; // sin verificación no se habilita nada más abajo
+      }
 
       const gate = document.getElementById('consent-gate');
       const uploadArea = document.getElementById('upload-area');
