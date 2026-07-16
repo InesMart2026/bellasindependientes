@@ -217,10 +217,17 @@
         btn.textContent = 'Abriendo verificación...';
         try {
           const { data, error } = await window.supabaseClient.functions.invoke('crear-kyc', { body: {} });
-          if (error || !data?.url) throw error || new Error('sin url');
+          // invoke() colapsa cualquier no-2xx en un error genérico; el motivo
+          // real viaja en el body. Lo leemos para mostrarle a ella qué corregir.
+          if (error) {
+            let motivo = '';
+            try { motivo = (await error.context?.json())?.error || ''; } catch {}
+            throw new Error(motivo || 'sin respuesta del servidor');
+          }
+          if (!data?.url) throw new Error('el proveedor no devolvió el enlace');
           window.location.href = data.url;
         } catch (err) {
-          alert('No se pudo iniciar la verificación. Intentá de nuevo en un momento.');
+          alert('No se pudo iniciar la verificación: ' + (err.message || 'error desconocido'));
           btn.disabled = false;
           btn.textContent = 'Verificar identidad ahora';
         }
