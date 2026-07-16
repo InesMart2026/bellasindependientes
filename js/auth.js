@@ -36,11 +36,25 @@ window.authHelpers = {
   },
 
   async requireAuth() {
+    // getSession() lee de localStorage sin validar: puede devolver una sesión
+    // con el access_token vencido. Con ese token muerto, las RPC salen anónimas
+    // (auth.uid() = null) y get_my_profile() devuelve vacío → rebotaba a
+    // verificación a una escort verificada. getUser() sí valida contra el server
+    // y refresca el token si el refresh_token todavía sirve.
     const { data: { session } } = await this.getSession();
     if (!session) {
       window.location.href = '/dashboard/login.html';
       return null;
     }
-    return session.user;
+
+    const { data: { user }, error } = await window.supabaseClient.auth.getUser();
+    if (error || !user) {
+      // Token no recuperable: se limpia la sesión muerta y se manda a login,
+      // en vez de dejar pasar con un JWT que hará fallar toda llamada posterior.
+      await window.supabaseClient.auth.signOut().catch(() => {});
+      window.location.href = '/dashboard/login.html';
+      return null;
+    }
+    return user;
   }
 };
