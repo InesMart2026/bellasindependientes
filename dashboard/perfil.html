@@ -194,9 +194,12 @@
           user_id: user.id
         };
 
-        const { error } = escort
-          ? await window.supabaseClient.from('escorts').update(formData).eq('id', escort.id)
-          : await window.supabaseClient.from('escorts').insert(formData);
+        // upsert sobre user_id: crea el perfil si no existe y lo actualiza si ya
+        // existe, sin depender de la variable `escort` cargada al abrir la página
+        // (quedaba desactualizada tras el primer guardado y reventaba el unique).
+        const { error } = await window.supabaseClient
+          .from('escorts')
+          .upsert(formData, { onConflict: 'user_id' });
 
         // El trigger validate_servicios rechaza cualquier servicio fuera del
         // catálogo. Sin este chequeo el guardado fallaba en silencio.
