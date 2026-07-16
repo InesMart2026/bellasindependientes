@@ -110,11 +110,26 @@
       const formEl   = document.getElementById('legal-form');
       const kycStep  = document.getElementById('kyc-step');
 
+      // Al volver de Didit (dominio externo), el navegador interno de Gmail /
+      // Safari mobile puede no haber restaurado aún la sesión de Supabase: la
+      // RPC saldría como anónima y get_my_profile devolvería null → caía al
+      // formulario aunque los datos existieran (el bucle). Se fuerza refrescar
+      // la sesión antes de leer, para que la RPC lleve el JWT de la escort.
+      await window.supabaseClient.auth.refreshSession().catch(() => {});
+
       // 1. Cargar perfil (datos legales previos + estado) y los términos vigentes
-      const [{ data: profile }, { data: terminos }] = await Promise.all([
+      let [{ data: profile }, { data: terminos }] = await Promise.all([
         window.supabaseClient.rpc('get_my_profile').maybeSingle(),
         window.supabaseClient.rpc('terminos_vigentes').maybeSingle(),
       ]);
+
+      // Red de seguridad: si aún así vino vacío pero hay sesión, reintentar una
+      // vez tras esperar la restauración. Evita el falso "cargá tus datos".
+      if (!profile) {
+        await new Promise(r => setTimeout(r, 400));
+        const { data: retry } = await window.supabaseClient.rpc('get_my_profile').maybeSingle();
+        if (retry) profile = retry;
+      }
 
       document.getElementById('acuerdo-texto').textContent = terminos?.texto || '';
 
@@ -124,15 +139,6 @@
       // muestra el formulario legal en blanco y la fila nace al guardar (upsert).
       const estado = profile?.estado_verificacion || 'pendiente';
       renderBanner(estado);
-
-      // DIAGNÓSTICO TEMPORAL: imprime en pantalla el estado real con que vuelve,
-      // para saber por qué reaparece el formulario. Se saca una vez confirmado.
-      bannerEl.insertAdjacentHTML('afterbegin',
-        `<div style="background:#222;border:1px solid #e6b800;border-radius:8px;padding:.75rem 1rem;margin-bottom:1rem;font-size:.8rem;color:#e6b800;">
-          diagnóstico → perfil: ${profile ? 'sí' : 'NO'} · estado: <strong>${estado}</strong>
-          · acuerdo: ${profile?.acuerdo_legal ? 'sí' : 'no'}
-          · datos previos: ${profile?.nombre || profile?.provincia ? 'sí' : 'no'}
-        </div>`);
 
       // Si ya cargó sus datos legales alguna vez (la fila existe con acuerdo
       // firmado) NO se le vuelve a mostrar el formulario en blanco, sin importar
