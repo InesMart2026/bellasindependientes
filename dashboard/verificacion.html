@@ -177,11 +177,28 @@
             <p style="font-size:1.05rem;margin-bottom:.75rem;">Estamos validando tu identidad</p>
             <p style="color:var(--text-secondary);font-size:.9rem;margin-bottom:1.25rem;">
               Ya recibimos tu DNI y tu selfie. La verificación puede tardar unos
-              minutos. Cuando se apruebe vas a poder cargar tus fotos y contratar
-              un paquete. No hace falta que cargues nada de nuevo.
+              minutos y se confirma sola — no cierres esta pantalla ni cargues
+              nada de nuevo. En cuanto se apruebe seguís al paso de fotos.
             </p>
-            <button class="btn btn-gold" onclick="location.reload()">Actualizar estado</button>
+            <p id="poll-hint" style="color:var(--text-secondary);font-size:.85rem;">
+              Verificando automáticamente…
+            </p>
           </div>`);
+        // Auto-chequeo: consulta el estado cada 6s sin que ella toque nada.
+        // Cuando el webhook de Didit confirma (verificado), avanza sola a fotos.
+        // Si sale rechazado, recarga para mostrar el paso de reintento.
+        const poll = setInterval(async () => {
+          const { data: p } = await window.supabaseClient
+            .rpc('get_my_profile').maybeSingle();
+          const est = p?.estado_verificacion;
+          if (est === 'verificado') {
+            clearInterval(poll);
+            window.location.href = '/dashboard/fotos.html';
+          } else if (est === 'rechazado') {
+            clearInterval(poll);
+            window.location.reload();
+          }
+        }, 6000);
         return;
       }
 
@@ -244,6 +261,16 @@
               <button class="btn btn-outline" id="kyc-resume">Retomar verificación</button>
             </div>
           </div>`);
+        // Mismo auto-chequeo que en_revision: si el webhook confirma mientras
+        // ella espera acá, avanza sola a fotos sin tocar nada.
+        const poll = setInterval(async () => {
+          const { data: p } = await window.supabaseClient
+            .rpc('get_my_profile').maybeSingle();
+          if (p?.estado_verificacion === 'verificado') {
+            clearInterval(poll);
+            window.location.href = '/dashboard/fotos.html';
+          }
+        }, 6000);
         document.getElementById('kyc-resume').addEventListener('click', async (ev) => {
           const b = ev.currentTarget;
           b.disabled = true;
