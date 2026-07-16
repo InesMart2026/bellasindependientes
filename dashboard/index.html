@@ -86,7 +86,24 @@
         const diasRest = Math.ceil((vence - ahora) / 86400000);
         statusEl.innerHTML = '<span style="color:var(--gold);">● Activo</span>';
         detailEl.textContent = `${diasRest} ${diasRest === 1 ? 'día' : 'días'} · vence el ${vence.toLocaleDateString('es-AR')}`;
-        if (diasRest <= 3) {
+
+        // Pagó pero todavía no cargó el perfil (nombre) o las fotos: sin esta
+        // CTA queda "activa" pero sin nada que mostrar y sin camino de vuelta al
+        // perfil. Encadena perfil → fotos con el mismo ?next=fotos del onboarding.
+        const perfilIncompleto = !escort.nombre || !count;
+        if (perfilIncompleto) {
+          const falta = !escort.nombre
+            ? 'Completá los datos de tu perfil y cargá tus fotos para aparecer en el listado.'
+            : 'Cargá tus fotos para aparecer en el listado.';
+          const destino = !escort.nombre ? '/dashboard/perfil.html?next=fotos' : '/dashboard/fotos.html';
+          ctaEl.innerHTML = `
+            <div class="plan-card" style="text-align:left;margin-top:1.5rem;border-color:var(--gold);">
+              <p>${falta}</p>
+              <a href="${destino}" class="btn btn-gold" style="margin-top:.75rem;display:inline-block;">
+                ${!escort.nombre ? 'Completar mi perfil' : 'Cargar mis fotos'}
+              </a>
+            </div>`;
+        } else if (diasRest <= 3) {
           ctaEl.innerHTML = `
             <div class="plan-card" style="text-align:left;margin-top:1.5rem;border-color:var(--gold);">
               <p>Tu perfil vence pronto. Renová para no salir del listado.</p>

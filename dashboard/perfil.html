@@ -130,7 +130,7 @@
           </div>
         </div>
 
-        <button type="submit" class="btn btn-gold">Guardar</button>
+        <button type="submit" id="submit-btn" class="btn btn-gold">Guardar</button>
       </form>
     </main>
   </div>
@@ -152,6 +152,14 @@
       if (!escort || escort.estado_verificacion !== 'verificado') {
         window.location.href = '/dashboard/verificacion.html';
         return;
+      }
+
+      // Flujo de onboarding tras el pago: ?next=fotos encadena perfil → fotos.
+      // Cambia el botón a "Continuar" y, al guardar, sigue a las fotos en vez de
+      // volver al panel. Sin el parámetro (edición normal), no cambia nada.
+      const irAFotos = new URLSearchParams(location.search).get('next') === 'fotos';
+      if (irAFotos) {
+        document.getElementById('submit-btn').textContent = 'Continuar';
       }
 
       renderServicios(catalogo || [], escort?.servicios || []);
@@ -216,8 +224,14 @@
           return;
         }
 
-        alert('Perfil guardado correctamente');
-        window.location.href = '/dashboard/';
+        // En onboarding sigue directo a las fotos (sin cortar con un popup);
+        // en edición normal confirma el guardado y vuelve al panel.
+        if (irAFotos) {
+          window.location.href = '/dashboard/fotos.html';
+        } else {
+          alert('Perfil guardado correctamente');
+          window.location.href = '/dashboard/';
+        }
       });
 
       // Pinta el catálogo agrupado y marca lo que la escort ya tenía elegido.
