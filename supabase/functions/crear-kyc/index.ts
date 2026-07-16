@@ -76,6 +76,14 @@ Deno.serve(async (req) => {
     }
 
     // 2. Crear la sesión en Didit (API v3)
+    // callback = a dónde vuelve la escort cuando termina el KYC. Sin esto,
+    // Didit la deja en su widget y no regresa al sitio. Se la devuelve a la
+    // misma página de verificación, que lee estado_verificacion y muestra el
+    // banner "en proceso / verificada". El Origin lo manda el navegador; si
+    // faltara (llamada server-to-server) se cae al dominio de producción.
+    const origin = req.headers.get('Origin') ?? 'https://bellasindependientes.com';
+    const callback = `${origin}/dashboard/verificacion.html`;
+
     const diditRes = await fetch('https://verification.didit.me/v3/session/', {
       method: 'POST',
       headers: {
@@ -86,6 +94,7 @@ Deno.serve(async (req) => {
         workflow_id: Deno.env.get('DIDIT_WORKFLOW_ID'),
         // vendor_data nos permite mapear el resultado del webhook a la escort.
         vendor_data: escort.id,
+        callback,
       }),
     });
     const didit = await diditRes.json();
