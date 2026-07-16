@@ -125,6 +125,21 @@
       const estado = profile?.estado_verificacion || 'pendiente';
       renderBanner(estado);
 
+      // DIAGNÓSTICO TEMPORAL: imprime en pantalla el estado real con que vuelve,
+      // para saber por qué reaparece el formulario. Se saca una vez confirmado.
+      bannerEl.insertAdjacentHTML('afterbegin',
+        `<div style="background:#222;border:1px solid #e6b800;border-radius:8px;padding:.75rem 1rem;margin-bottom:1rem;font-size:.8rem;color:#e6b800;">
+          diagnóstico → perfil: ${profile ? 'sí' : 'NO'} · estado: <strong>${estado}</strong>
+          · acuerdo: ${profile?.acuerdo_legal ? 'sí' : 'no'}
+          · datos previos: ${profile?.nombre || profile?.provincia ? 'sí' : 'no'}
+        </div>`);
+
+      // Si ya cargó sus datos legales alguna vez (la fila existe con acuerdo
+      // firmado) NO se le vuelve a mostrar el formulario en blanco, sin importar
+      // el estado: se la deja en el paso de verificación biométrica. El único
+      // caso con formulario es cuando aún no cargó nada (perfil nuevo).
+      const yaCargoDatos = profile?.acuerdo_legal === true;
+
       if (estado === 'verificado') {
         // Ya verificada: no tiene sentido mostrarle de nuevo el formulario de
         // datos. Se le muestra el camino que sigue — cargar fotos y contratar
@@ -197,6 +212,49 @@
             alert('No se pudo iniciar la verificación: ' + (err.message || 'error desconocido'));
             b.disabled = false;
             b.textContent = 'Reintentar verificación';
+          }
+        });
+        return;
+      }
+
+      // Red de seguridad: si YA firmó el acuerdo y cargó sus datos, la fila
+      // existe. Si el estado quedó en 'pendiente' (webhook que no corrió, o un
+      // reintento antes de que crear-kyc marque 'en_revision'), NO se le vacía
+      // el formulario — eso era el bucle. Se la trata como en revisión: no
+      // recarga nada, con opción a refrescar o reanudar la verificación.
+      if (yaCargoDatos) {
+        formEl.style.display = 'none';
+        bannerEl.insertAdjacentHTML('beforeend', `
+          <div class="plan-card" style="text-align:left;">
+            <p style="font-size:1.05rem;margin-bottom:.75rem;">Tus datos ya están cargados</p>
+            <p style="color:var(--text-secondary);font-size:.9rem;margin-bottom:1.25rem;">
+              No hace falta que los cargues de nuevo. Si ya hiciste la
+              verificación con DNI y selfie, puede tardar unos minutos en
+              confirmarse. Actualizá el estado o retomá la verificación si
+              quedó a medias.
+            </p>
+            <div style="display:flex;gap:.75rem;flex-wrap:wrap;">
+              <button class="btn btn-gold" onclick="location.reload()">Actualizar estado</button>
+              <button class="btn btn-outline" id="kyc-resume">Retomar verificación</button>
+            </div>
+          </div>`);
+        document.getElementById('kyc-resume').addEventListener('click', async (ev) => {
+          const b = ev.currentTarget;
+          b.disabled = true;
+          b.textContent = 'Abriendo verificación...';
+          try {
+            const { data, error } = await window.supabaseClient.functions.invoke('crear-kyc', { body: {} });
+            if (error) {
+              let motivo = '';
+              try { motivo = (await error.context?.json())?.error || ''; } catch {}
+              throw new Error(motivo || 'sin respuesta del servidor');
+            }
+            if (!data?.url) throw new Error('el proveedor no devolvió el enlace');
+            window.location.href = data.url;
+          } catch (err) {
+            alert('No se pudo iniciar la verificación: ' + (err.message || 'error desconocido'));
+            b.disabled = false;
+            b.textContent = 'Retomar verificación';
           }
         });
         return;
