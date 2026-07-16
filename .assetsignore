@@ -1,0 +1,14 @@
+# Archivos versionados en git pero que NO deben publicarse como sitio web.
+# Cloudflare Pages respeta este archivo al servir los assets.
+
+# Backend: migraciones SQL y Edge Functions viven en Supabase, no en el hosting.
+supabase
+
+# Documentación interna del proyecto.
+docs
+CLAUDE.md
+
+# Metadata de git / config local.
+.git
+.gitignore
+.assetsignore
