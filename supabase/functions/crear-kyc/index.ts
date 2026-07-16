@@ -76,13 +76,15 @@ Deno.serve(async (req) => {
     }
 
     // 2. Crear la sesión en Didit (API v3)
-    // callback = a dónde vuelve la escort cuando termina el KYC. Sin esto,
-    // Didit la deja en su widget y no regresa al sitio. Se la devuelve a la
-    // misma página de verificación, que lee estado_verificacion y muestra el
-    // banner "en proceso / verificada". El Origin lo manda el navegador; si
-    // faltara (llamada server-to-server) se cae al dominio de producción.
-    const origin = req.headers.get('Origin') ?? 'https://bellasindependientes.com';
-    const callback = `${origin}/dashboard/verificacion.html`;
+    // callback = a dónde vuelve la escort al terminar el KYC. NO se la manda de
+    // vuelta a verificacion.html: ahí ya cargó todo y el widget la reenviaba a
+    // la misma pantalla (eso se veía como "bucle"). Se la lleva a fotos.html,
+    // el paso siguiente. Esa página ya tiene el gate: si el webhook de Didit
+    // todavía no confirmó (estado en_revision) muestra "verificación en
+    // proceso"; cuando confirma, habilita la subida. Nunca vuelve a pedir datos.
+    // El Origin de functions.invoke() no es confiable (puede traer el host de
+    // Supabase), por eso el callback se fija al dominio de producción.
+    const callback = 'https://bellasindependientes.com/dashboard/fotos.html';
 
     const diditRes = await fetch('https://verification.didit.me/v3/session/', {
       method: 'POST',
