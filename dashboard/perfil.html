@@ -146,6 +146,14 @@
         window.supabaseClient.rpc('get_provincias_catalogo'),
       ]);
 
+      // El perfil público recién se habilita DESPUÉS de verificar la identidad.
+      // Sin verificación, se manda a ese paso: crear el anuncio antes no tiene
+      // sentido y el pago igual está gateado por la verificación.
+      if (!escort || escort.estado_verificacion !== 'verificado') {
+        window.location.href = '/dashboard/verificacion.html';
+        return;
+      }
+
       renderServicios(catalogo || [], escort?.servicios || []);
       // Antes de asignar el valor guardado: un <select> vacío ignora el .value.
       renderProvincias(provincias || []);

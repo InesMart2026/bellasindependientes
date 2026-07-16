@@ -118,18 +118,11 @@
 
       document.getElementById('acuerdo-texto').textContent = terminos?.texto || '';
 
-      if (!profile) {
-        bannerEl.innerHTML = `
-          <div class="plan-card" style="text-align:left;">
-            <p>Primero creá tu perfil público con nombre y slug.</p>
-            <a href="/dashboard/perfil.html" class="btn btn-gold" style="margin-top:.75rem;display:inline-block;">Ir a Mi Perfil</a>
-          </div>`;
-        formEl.style.display = 'none';
-        return;
-      }
-
-      // Estado de verificación → banner
-      const estado = profile.estado_verificacion;
+      // La verificación es el PRIMER paso tras registrarse: puede no existir
+      // todavía la fila escort. No se patea a "creá tu perfil" — el perfil
+      // público recién se habilita DESPUÉS de verificar. Si no hay fila, se
+      // muestra el formulario legal en blanco y la fila nace al guardar (upsert).
+      const estado = profile?.estado_verificacion || 'pendiente';
       renderBanner(estado);
 
       if (estado === 'verificado') {
@@ -138,17 +131,17 @@
       }
 
       // Pre-cargar provincia/localidad/acuerdo (los sensibles NO se re-exponen)
-      document.getElementById('provincia').value = profile.provincia || '';
-      document.getElementById('localidad').value = profile.localidad || '';
+      document.getElementById('provincia').value = profile?.provincia || '';
+      document.getElementById('localidad').value = profile?.localidad || '';
 
       // Aceptar una vez no alcanza: si los términos cambiaron, lo que firmó ya
       // no es lo que rige. El check vuelve a cero y tiene que firmar la nueva versión.
-      const alDia = profile.acuerdo_legal &&
+      const alDia = profile?.acuerdo_legal &&
         profile.acuerdo_legal_version === profile.terminos_vigentes_version;
 
       document.getElementById('acuerdo').checked = alDia;
 
-      if (profile.acuerdo_legal && !alDia) {
+      if (profile?.acuerdo_legal && !alDia) {
         bannerEl.insertAdjacentHTML('beforeend', `
           <div class="plan-card" style="text-align:left;margin-bottom:1.5rem;border-color:var(--gold);">
             <p style="color:var(--gold);font-size:1.05rem;margin-bottom:.35rem;">● Términos actualizados</p>
@@ -177,6 +170,7 @@
         btn.textContent = 'Guardando...';
 
         const payload = {
+          user_id:     user.id,
           nombre_real: val('nombre_real'),
           apellido:    val('apellido'),
           dni:         val('dni'),
@@ -192,8 +186,11 @@
           btn.textContent = 'Guardar datos';
         };
 
+        // upsert: crea la fila escort si es la primera vez (la verificación es
+        // el paso inicial, antes de tener perfil público) o la actualiza si ya
+        // existe. onConflict user_id evita chocar con el unique.
         const { error } = await window.supabaseClient
-          .from('escorts').update(payload).eq('user_id', user.id);
+          .from('escorts').upsert(payload, { onConflict: 'user_id' });
 
         if (error) return fallar('No se pudieron guardar los datos. Revisá que estén completos.');
 

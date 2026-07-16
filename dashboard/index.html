@@ -56,10 +56,13 @@
         .from('escorts')
         .select('*')
         .eq('user_id', user.id)
-        .single();
+        .maybeSingle();
 
-      if (!escort) {
-        window.location.href = '/dashboard/perfil.html';
+      // Orden del onboarding: primero verificar identidad, recién después crear
+      // el perfil público. Mientras no esté verificada, todo camino lleva a
+      // Verificación (sin fila escort todavía, o con verificación pendiente).
+      if (!escort || escort.estado_verificacion !== 'verificado') {
+        window.location.href = '/dashboard/verificacion.html';
         return;
       }
 

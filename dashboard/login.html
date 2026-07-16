@@ -13,42 +13,121 @@
 <body style="display:flex;justify-content:center;align-items:center;min-height:100vh;">
   <div style="max-width:400px;width:100%;padding:2rem;">
     <a href="/" class="header-logo" style="display:block;text-align:center;margin-bottom:2rem;">Bellas Independientes</a>
-    <h2 style="text-align:center;margin-bottom:.5rem;">Accedé a tu panel</h2>
-    <p style="text-align:center;color:var(--text-secondary);margin-bottom:2rem;">Te enviamos un link mágico a tu email</p>
+    <h2 style="text-align:center;margin-bottom:.5rem;" id="title">Accedé a tu panel</h2>
+    <p style="text-align:center;color:var(--text-secondary);margin-bottom:2rem;" id="subtitle">Ingresá con tu email y contraseña</p>
 
     <div id="message" style="display:none;padding:1rem;margin-bottom:1rem;border-radius:4px;"></div>
 
     <form id="login-form">
       <div class="form-group">
         <label>Email</label>
-        <input type="email" id="email" required placeholder="tu@email.com">
+        <input type="email" id="email" required placeholder="tu@email.com" autocomplete="email">
       </div>
-      <button type="submit" class="btn btn-gold" style="width:100%;">Enviar link mágico</button>
+      <div class="form-group">
+        <label>Contraseña</label>
+        <input type="password" id="password" required minlength="8"
+               placeholder="Mínimo 8 caracteres" autocomplete="current-password">
+      </div>
+      <button type="submit" class="btn btn-gold" style="width:100%;" id="submit-btn">Entrar</button>
     </form>
 
-    <p style="text-align:center;margin-top:2rem;color:var(--text-secondary);font-size:.85rem;">
-      ¿No tenés cuenta? <a href="/planes.html">Elegí un plan</a>
+    <p style="text-align:center;margin-top:1rem;">
+      <a href="#" id="forgot-link" style="color:var(--text-secondary);font-size:.85rem;">¿Olvidaste tu contraseña?</a>
+    </p>
+
+    <p style="text-align:center;margin-top:2rem;color:var(--text-secondary);font-size:.9rem;">
+      <span id="switch-text">¿No tenés cuenta?</span>
+      <a href="#" id="switch-link">Crear cuenta</a>
     </p>
   </div>
 
   <script>
+    // La misma página alterna entre "entrar" y "crear cuenta" sin recargar.
+    let mode = 'signin';
+
+    const els = {
+      title:    document.getElementById('title'),
+      subtitle: document.getElementById('subtitle'),
+      password: document.getElementById('password'),
+      submit:   document.getElementById('submit-btn'),
+      switchText: document.getElementById('switch-text'),
+      switchLink: document.getElementById('switch-link'),
+      forgot:   document.getElementById('forgot-link'),
+    };
+
+    function applyMode() {
+      if (mode === 'signup') {
+        els.title.textContent = 'Creá tu cuenta';
+        els.subtitle.textContent = 'Registrate para publicar tu perfil';
+        els.submit.textContent = 'Crear cuenta';
+        els.password.autocomplete = 'new-password';
+        els.switchText.textContent = '¿Ya tenés cuenta?';
+        els.switchLink.textContent = 'Entrar';
+        els.forgot.parentElement.style.display = 'none';
+      } else {
+        els.title.textContent = 'Accedé a tu panel';
+        els.subtitle.textContent = 'Ingresá con tu email y contraseña';
+        els.submit.textContent = 'Entrar';
+        els.password.autocomplete = 'current-password';
+        els.switchText.textContent = '¿No tenés cuenta?';
+        els.switchLink.textContent = 'Crear cuenta';
+        els.forgot.parentElement.style.display = 'block';
+      }
+    }
+
+    els.switchLink.addEventListener('click', (e) => {
+      e.preventDefault();
+      mode = mode === 'signin' ? 'signup' : 'signin';
+      hideMessage();
+      applyMode();
+    });
+
+    els.forgot.addEventListener('click', async (e) => {
+      e.preventDefault();
+      const email = document.getElementById('email').value.trim();
+      if (!email) {
+        showMessage('Escribí tu email arriba y volvé a tocar el link.', 'error');
+        return;
+      }
+      try {
+        await authHelpers.resetPassword(email);
+        showMessage('Te enviamos un link para restablecer tu contraseña. Revisá tu email.', 'success');
+      } catch (err) {
+        showMessage('No se pudo enviar el link. ' + err.message, 'error');
+      }
+    });
+
     document.getElementById('login-form').addEventListener('submit', async (e) => {
       e.preventDefault();
-      const email = document.getElementById('email').value;
-      const btn = e.target.querySelector('button');
-      btn.disabled = true;
-      btn.textContent = 'Enviando...';
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value;
+      els.submit.disabled = true;
+      els.submit.textContent = mode === 'signup' ? 'Creando...' : 'Entrando...';
 
       try {
-        await authHelpers.login(email);
-        showMessage('Link mágico enviado. Revisá tu email.', 'success');
+        if (mode === 'signup') {
+          await authHelpers.signUp(email, password);
+        } else {
+          await authHelpers.signIn(email, password);
+        }
+        // Recién registrada o recién logueada: al dashboard, que decide el
+        // próximo paso (verificar identidad antes que nada).
+        window.location.href = '/dashboard/';
       } catch (err) {
-        showMessage('Error: ' + err.message, 'error');
+        showMessage(traducirError(err.message), 'error');
+        els.submit.disabled = false;
+        applyMode();
       }
-
-      btn.disabled = false;
-      btn.textContent = 'Enviar link mágico';
     });
+
+    // Los mensajes de Supabase vienen en inglés: se traducen los más comunes.
+    function traducirError(msg) {
+      const m = (msg || '').toLowerCase();
+      if (m.includes('invalid login credentials')) return 'Email o contraseña incorrectos.';
+      if (m.includes('user already registered')) return 'Ya existe una cuenta con ese email. Tocá "Entrar".';
+      if (m.includes('password should be at least')) return 'La contraseña debe tener al menos 8 caracteres.';
+      return 'Error: ' + msg;
+    }
 
     function showMessage(text, type) {
       const msg = document.getElementById('message');
@@ -56,6 +135,9 @@
       msg.textContent = text;
       msg.style.background = type === 'success' ? 'rgba(212,175,55,.1)' : 'rgba(255,0,0,.1)';
       msg.style.color = type === 'success' ? 'var(--gold)' : '#ff4444';
+    }
+    function hideMessage() {
+      document.getElementById('message').style.display = 'none';
     }
   </script>
 </body>
