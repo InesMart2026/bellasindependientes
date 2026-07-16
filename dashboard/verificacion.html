@@ -117,18 +117,22 @@
       // la sesión antes de leer, para que la RPC lleve el JWT de la escort.
       await window.supabaseClient.auth.refreshSession().catch(() => {});
 
-      // 1. Cargar perfil (datos legales previos + estado) y los términos vigentes
-      let [{ data: profile }, { data: terminos }] = await Promise.all([
-        window.supabaseClient.rpc('get_my_profile').maybeSingle(),
+      // 1. Cargar perfil (datos legales previos + estado) y los términos vigentes.
+      // get_my_profile() devuelve una tabla: se lee como array y se toma [0].
+      // .maybeSingle() acá devolvía null aunque el perfil existiera → ESE era el
+      // bucle (caía al formulario / rebotaba con datos ya cargados).
+      let [{ data: profileRows }, { data: terminos }] = await Promise.all([
+        window.supabaseClient.rpc('get_my_profile'),
         window.supabaseClient.rpc('terminos_vigentes').maybeSingle(),
       ]);
+      let profile = profileRows && profileRows[0];
 
       // Red de seguridad: si aún así vino vacío pero hay sesión, reintentar una
       // vez tras esperar la restauración. Evita el falso "cargá tus datos".
       if (!profile) {
         await new Promise(r => setTimeout(r, 400));
-        const { data: retry } = await window.supabaseClient.rpc('get_my_profile').maybeSingle();
-        if (retry) profile = retry;
+        const { data: retry } = await window.supabaseClient.rpc('get_my_profile');
+        if (retry && retry[0]) profile = retry[0];
       }
 
       document.getElementById('acuerdo-texto').textContent = terminos?.texto || '';
@@ -188,9 +192,8 @@
         // Cuando el webhook de Didit confirma (verificado), avanza sola a fotos.
         // Si sale rechazado, recarga para mostrar el paso de reintento.
         const poll = setInterval(async () => {
-          const { data: p } = await window.supabaseClient
-            .rpc('get_my_profile').maybeSingle();
-          const est = p?.estado_verificacion;
+          const { data: p } = await window.supabaseClient.rpc('get_my_profile');
+          const est = p?.[0]?.estado_verificacion;
           if (est === 'verificado') {
             clearInterval(poll);
             window.location.href = '/dashboard/fotos.html';
@@ -264,9 +267,8 @@
         // Mismo auto-chequeo que en_revision: si el webhook confirma mientras
         // ella espera acá, avanza sola a fotos sin tocar nada.
         const poll = setInterval(async () => {
-          const { data: p } = await window.supabaseClient
-            .rpc('get_my_profile').maybeSingle();
-          if (p?.estado_verificacion === 'verificado') {
+          const { data: p } = await window.supabaseClient.rpc('get_my_profile');
+          if (p?.[0]?.estado_verificacion === 'verificado') {
             clearInterval(poll);
             window.location.href = '/dashboard/fotos.html';
           }

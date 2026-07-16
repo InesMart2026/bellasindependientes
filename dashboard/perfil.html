@@ -140,11 +140,16 @@
       const user = await authHelpers.requireAuth();
       if (!user) return;
 
-      const [{ data: escort }, { data: catalogo }, { data: provincias }] = await Promise.all([
-        window.supabaseClient.rpc('get_my_profile').maybeSingle(),
+      // get_my_profile() devuelve una tabla (array). .maybeSingle() sobre eso
+      // devolvía null aunque hubiera perfil, y el gate de abajo rebotaba a
+      // verificación a una escort ya verificada. Se lee como array, igual que
+      // fotos.html, y se toma la primera fila.
+      const [{ data: rows }, { data: catalogo }, { data: provincias }] = await Promise.all([
+        window.supabaseClient.rpc('get_my_profile'),
         window.supabaseClient.rpc('get_servicios_catalogo'),
         window.supabaseClient.rpc('get_provincias_catalogo'),
       ]);
+      const escort = rows && rows[0];
 
       // El perfil público recién se habilita DESPUÉS de verificar la identidad.
       // Sin verificación, se manda a ese paso: crear el anuncio antes no tiene
