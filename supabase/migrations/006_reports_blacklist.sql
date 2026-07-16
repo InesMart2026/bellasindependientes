@@ -21,6 +21,13 @@
 --  · Ley 25.326 → hash en lugar de DNI plano; retención mínima.
 -- ═══════════════════════════════════════════════════════════════════
 
+-- pgcrypto ya está instalada (la migración 004 encripta con pgp_sym_*),
+-- pero está en el schema `extensions`, fuera del search_path por defecto
+-- de las migraciones y de las funciones. pgp_sym_* resolvía por suerte del
+-- contexto, pero digest() no. Las funciones que usan pgcrypto abajo fijan
+-- `SET search_path = public, extensions` en su definición para que resuelva
+-- en tiempo de ejecución sin importar quién las llame.
+
 -- ── 1. Columnas de bloqueo en escorts ──────────────────────────────
 ALTER TABLE escorts ADD COLUMN IF NOT EXISTS bloqueada        BOOLEAN NOT NULL DEFAULT false;
 ALTER TABLE escorts ADD COLUMN IF NOT EXISTS bloqueada_motivo TEXT;
@@ -182,7 +189,8 @@ ALTER TABLE blacklist ENABLE ROW LEVEL SECURITY;
 
 -- Normaliza un DNI (solo dígitos) y devuelve su hash SHA-256 en hex.
 CREATE OR REPLACE FUNCTION dni_hash(dni_raw TEXT) RETURNS TEXT
-LANGUAGE sql IMMUTABLE AS $$
+LANGUAGE sql IMMUTABLE
+SET search_path = public, extensions AS $$
   SELECT encode(digest(regexp_replace(coalesce(dni_raw,''), '\\D', '', 'g'), 'sha256'), 'hex');
 $$;
 
