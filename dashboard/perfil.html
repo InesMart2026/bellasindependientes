@@ -140,16 +140,31 @@
       const user = await authHelpers.requireAuth();
       if (!user) return;
 
+      // Al llegar desde el mail o mobile, la sesión de Supabase puede no estar
+      // restaurada todavía: get_my_profile() saldría anónima y devolvería vacío
+      // → rebotaba a verificación a una escort ya verificada. Se fuerza refrescar
+      // la sesión antes de leer, igual que verificacion.html.
+      await window.supabaseClient.auth.refreshSession().catch(() => {});
+
       // get_my_profile() devuelve una tabla (array). .maybeSingle() sobre eso
       // devolvía null aunque hubiera perfil, y el gate de abajo rebotaba a
-      // verificación a una escort ya verificada. Se lee como array, igual que
-      // fotos.html, y se toma la primera fila.
-      const [{ data: rows }, { data: catalogo }, { data: provincias }] = await Promise.all([
-        window.supabaseClient.rpc('get_my_profile'),
+      // verificación. Se lee como array, igual que fotos.html, y se toma [0].
+      const leerPerfil = async () => {
+        const { data } = await window.supabaseClient.rpc('get_my_profile');
+        return data && data[0];
+      };
+      const [{ data: catalogo }, { data: provincias }] = await Promise.all([
         window.supabaseClient.rpc('get_servicios_catalogo'),
         window.supabaseClient.rpc('get_provincias_catalogo'),
       ]);
-      const escort = rows && rows[0];
+      let escort = await leerPerfil();
+
+      // Red de seguridad: si vino vacío pero hay sesión, reintentar una vez tras
+      // esperar la restauración. Evita el falso rebote a verificación.
+      if (!escort) {
+        await new Promise(r => setTimeout(r, 400));
+        escort = await leerPerfil();
+      }
 
       // El perfil público recién se habilita DESPUÉS de verificar la identidad.
       // Sin verificación, se manda a ese paso: crear el anuncio antes no tiene
