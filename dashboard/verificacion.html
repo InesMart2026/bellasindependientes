@@ -145,6 +145,63 @@
         return;
       }
 
+      // Vuelve del KYC: ya cargó los datos y ya subió DNI + selfie. El webhook
+      // de Didit es asíncrono, así que todavía figura 'en_revision'. NO se le
+      // muestra el formulario de datos otra vez (eso era el bucle: la mandaba a
+      // recargar lo que ya cargó). Se la deja esperando con opción a refrescar.
+      if (estado === 'en_revision') {
+        formEl.style.display = 'none';
+        bannerEl.insertAdjacentHTML('beforeend', `
+          <div class="plan-card" style="text-align:left;">
+            <p style="font-size:1.05rem;margin-bottom:.75rem;">Estamos validando tu identidad</p>
+            <p style="color:var(--text-secondary);font-size:.9rem;margin-bottom:1.25rem;">
+              Ya recibimos tu DNI y tu selfie. La verificación puede tardar unos
+              minutos. Cuando se apruebe vas a poder cargar tus fotos y contratar
+              un paquete. No hace falta que cargues nada de nuevo.
+            </p>
+            <button class="btn btn-gold" onclick="location.reload()">Actualizar estado</button>
+          </div>`);
+        return;
+      }
+
+      // Rechazada: no se le vacía el formulario ni se la obliga a recargar datos.
+      // Sus datos legales siguen guardados; solo tiene que reintentar el KYC.
+      if (estado === 'rechazado') {
+        formEl.style.display = 'none';
+        bannerEl.insertAdjacentHTML('beforeend', `
+          <div class="plan-card" style="text-align:left;">
+            <p style="color:#e66;font-size:1.05rem;margin-bottom:.75rem;">No pudimos validar tu identidad</p>
+            <p style="color:var(--text-secondary);font-size:.9rem;margin-bottom:1.25rem;">
+              La verificación biométrica no coincidió. Puede pasar por mala luz o
+              una foto borrosa. Volvé a intentar con el documento a mano y buena
+              iluminación — tus datos ya están guardados.
+            </p>
+            <button class="btn btn-gold" id="kyc-retry">Reintentar verificación</button>
+          </div>`);
+        // El listener de kyc-btn se registra más abajo, tras este return, así que
+        // no se puede delegar el click. El retry llama a crear-kyc por su cuenta.
+        document.getElementById('kyc-retry').addEventListener('click', async (ev) => {
+          const b = ev.currentTarget;
+          b.disabled = true;
+          b.textContent = 'Abriendo verificación...';
+          try {
+            const { data, error } = await window.supabaseClient.functions.invoke('crear-kyc', { body: {} });
+            if (error) {
+              let motivo = '';
+              try { motivo = (await error.context?.json())?.error || ''; } catch {}
+              throw new Error(motivo || 'sin respuesta del servidor');
+            }
+            if (!data?.url) throw new Error('el proveedor no devolvió el enlace');
+            window.location.href = data.url;
+          } catch (err) {
+            alert('No se pudo iniciar la verificación: ' + (err.message || 'error desconocido'));
+            b.disabled = false;
+            b.textContent = 'Reintentar verificación';
+          }
+        });
+        return;
+      }
+
       // Pre-cargar provincia/localidad/acuerdo (los sensibles NO se re-exponen)
       document.getElementById('provincia').value = profile?.provincia || '';
       document.getElementById('localidad').value = profile?.localidad || '';
