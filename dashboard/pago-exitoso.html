@@ -21,14 +21,39 @@
 
   <div style="max-width:520px;margin:5rem auto;text-align:center;padding:0 1.5rem;">
     <div style="font-size:3rem;color:var(--gold);margin-bottom:1rem;">&#10003;</div>
-    <h2 class="section-title" style="margin-bottom:1rem;">Estamos confirmando tu pago</h2>
+    <h2 class="section-title" style="margin-bottom:1rem;">Pago recibido</h2>
     <p style="color:var(--text-secondary);margin-bottom:2rem;">
-      Apenas MercadoPago acredite el pago, tu perfil se activa automáticamente
-      y aparece en el listado. Puede tardar unos minutos. No hace falta que
-      hagas nada más.
+      Ya podés cargar las fotos de tu perfil. La activación en el listado se
+      confirma sola apenas MercadoPago acredite el pago — puede tardar unos
+      minutos y no tenés que hacer nada más para eso.
     </p>
-    <a href="/dashboard/" class="btn btn-gold">Ir a mi panel</a>
+    <div style="display:flex;gap:.75rem;justify-content:center;flex-wrap:wrap;">
+      <a href="/dashboard/fotos.html" class="btn btn-gold">Cargar mis fotos</a>
+      <a href="/dashboard/" class="btn btn-outline">Ir a mi panel</a>
+    </div>
   </div>
+
+  <script>
+    // MercadoPago vuelve con ?status=... en la URL. Si el pago quedó
+    // rechazado o pendiente, se ajusta el mensaje: no la mandamos a cargar
+    // fotos como si estuviera todo cerrado. El estado real del slot lo fija
+    // el webhook; esto es solo el mensaje que ve al volver.
+    const status = new URLSearchParams(location.search).get('status');
+    if (status && status !== 'approved') {
+      const titulo = document.querySelector('h2');
+      const texto  = titulo.nextElementSibling;
+      if (status === 'pending' || status === 'in_process') {
+        titulo.textContent = 'Tu pago está en proceso';
+        texto.textContent = 'MercadoPago todavía está procesando el pago. '
+          + 'Cuando se acredite, tu perfil se activa solo. Ya podés ir cargando tus fotos.';
+      } else {
+        titulo.textContent = 'No se pudo procesar el pago';
+        texto.textContent = 'MercadoPago no aprobó el pago. Podés intentar de nuevo desde tu plan.';
+        document.querySelector('.btn-gold').outerHTML =
+          '<a href="/dashboard/plan.html" class="btn btn-gold">Volver a intentar</a>';
+      }
+    }
+  </script>
 
   <footer class="footer">
     <p>Bellas Independientes &copy; 2026 &mdash; Todos los derechos reservados</p>
