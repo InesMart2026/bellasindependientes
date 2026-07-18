@@ -69,24 +69,31 @@ Deno.serve(async (req) => {
       ? norm
       : 'pending';
 
-    // Score de similitud facial si viene (0..1 o 0..100 según workflow).
+    // Scores de la decisión de Didit. El payload no es estable entre
+    // workflows: face_match puede venir como objeto ({score}) o como
+    // array (face_matches[].score); liveness igual (liveness{score} o
+    // liveness_checks[].score). extractScore tolera ambas formas y se
+    // queda con el mayor valor presente. Escala 0..100.
     const decision = body.decision as Record<string, any> | undefined;
-    const score = typeof decision?.face_match?.score === 'number'
-      ? decision.face_match.score
-      : null;
+    const faceScore = extractScore(decision, ['face_match', 'face_matches']);
+    const livenessScore = extractScore(decision, ['liveness', 'liveness_checks']);
 
     const admin = createClient(
       Deno.env.get('SB_URL')!,
       Deno.env.get('SB_SERVICE_ROLE')!,
     );
 
-    // 4. Aplicar el veredicto. activate_verification es idempotente y
-    //    mapea approved→verificado, declined→rechazado, resto→en_revision.
+    // 4. Aplicar el veredicto. activate_verification es idempotente:
+    //    approved→verificado; "In Review" con face>=85 y liveness>=85
+    //    →verificado (regla auditada, migración 018); resto→rechazado
+    //    (la UI lo trata como reintento, no como bucle).
     const { error } = await admin.rpc('activate_verification', {
       session_id: sessionId,
       new_status: mapped,
-      new_score: score,
+      new_score: faceScore,
       payload: body,
+      face_score: faceScore,
+      liveness_score: livenessScore,
     });
     if (error) {
       console.error('activate_verification error:', error);
@@ -99,6 +106,31 @@ Deno.serve(async (req) => {
     return new Response('error', { status: 500 });
   }
 });
+
+// Extrae un score de la decisión de Didit tolerando objeto o array.
+// Prueba cada key: si es objeto usa .score; si es array toma el máximo
+// .score de sus elementos. Devuelve el mayor valor hallado, o null.
+function extractScore(
+  decision: Record<string, any> | undefined,
+  keys: string[],
+): number | null {
+  if (!decision) return null;
+  let best: number | null = null;
+  const consider = (n: unknown) => {
+    if (typeof n === 'number' && Number.isFinite(n)) {
+      best = best === null ? n : Math.max(best, n);
+    }
+  };
+  for (const key of keys) {
+    const node = decision[key];
+    if (Array.isArray(node)) {
+      for (const item of node) consider(item?.score);
+    } else if (node && typeof node === 'object') {
+      consider(node.score);
+    }
+  }
+  return best;
+}
 
 // Prueba las tres firmas de Didit. Basta con que una coincida.
 async function verifySignature(

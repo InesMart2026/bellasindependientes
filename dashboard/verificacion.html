@@ -113,6 +113,30 @@
       const formEl   = document.getElementById('legal-form');
       const kycStep  = document.getElementById('kyc-step');
 
+      // Abre la sesión de Didit y redirige. Centraliza el manejo de errores:
+      // el 429 (intentos superados) trae un mensaje claro con el tiempo de
+      // espera en el body; el resto muestra el motivo real del servidor.
+      // btn: el <button> que se disparó, para restaurar su estado si falla.
+      async function iniciarKyc(btn, labelDefault) {
+        btn.disabled = true;
+        btn.textContent = 'Abriendo verificación...';
+        try {
+          const { data, error } = await window.supabaseClient.functions.invoke('crear-kyc', { body: {} });
+          if (error) {
+            // invoke() colapsa cualquier no-2xx: el motivo real viaja en el body.
+            let motivo = '';
+            try { motivo = (await error.context?.json())?.error || ''; } catch {}
+            throw new Error(motivo || 'sin respuesta del servidor');
+          }
+          if (!data?.url) throw new Error('el proveedor no devolvió el enlace');
+          window.location.href = data.url;
+        } catch (err) {
+          alert(err.message || 'No se pudo iniciar la verificación.');
+          btn.disabled = false;
+          btn.textContent = labelDefault;
+        }
+      }
+
       // Al volver de Didit (dominio externo), el navegador interno de Gmail /
       // Safari mobile puede no haber restaurado aún la sesión de Supabase: la
       // RPC saldría como anónima y get_my_profile devolvería null → caía al
@@ -214,35 +238,25 @@
         formEl.style.display = 'none';
         bannerEl.insertAdjacentHTML('beforeend', `
           <div class="plan-card" style="text-align:left;">
-            <p style="color:#e66;font-size:1.05rem;margin-bottom:.75rem;">No pudimos validar tu identidad</p>
+            <p style="color:var(--gold);font-size:1.05rem;margin-bottom:.75rem;">Los datos no se pudieron validar correctamente</p>
             <p style="color:var(--text-secondary);font-size:.9rem;margin-bottom:1.25rem;">
-              La verificación biométrica no coincidió. Puede pasar por mala luz o
-              una foto borrosa. Volvé a intentar con el documento a mano y buena
-              iluminación — tus datos ya están guardados.
+              No pudimos confirmar el DNI o la selfie. Probá una vez más
+              teniendo en cuenta:
             </p>
-            <button class="btn btn-gold" id="kyc-retry">Reintentar verificación</button>
+            <ul style="color:var(--text-secondary);font-size:.9rem;margin:0 0 1.25rem 1.1rem;padding:0;line-height:1.6;">
+              <li>Buena luz, sin sombras ni reflejos sobre el documento.</li>
+              <li>El DNI completo dentro del recuadro, sin recortar bordes.</li>
+              <li>La selfie con la cara despejada, de frente y sin lentes.</li>
+            </ul>
+            <p style="color:var(--text-secondary);font-size:.85rem;margin-bottom:1.25rem;">
+              Tus datos ya están guardados, no hace falta cargarlos de nuevo.
+            </p>
+            <button class="btn btn-gold" id="kyc-retry">Intentar de nuevo</button>
           </div>`);
         // El listener de kyc-btn se registra más abajo, tras este return, así que
         // no se puede delegar el click. El retry llama a crear-kyc por su cuenta.
-        document.getElementById('kyc-retry').addEventListener('click', async (ev) => {
-          const b = ev.currentTarget;
-          b.disabled = true;
-          b.textContent = 'Abriendo verificación...';
-          try {
-            const { data, error } = await window.supabaseClient.functions.invoke('crear-kyc', { body: {} });
-            if (error) {
-              let motivo = '';
-              try { motivo = (await error.context?.json())?.error || ''; } catch {}
-              throw new Error(motivo || 'sin respuesta del servidor');
-            }
-            if (!data?.url) throw new Error('el proveedor no devolvió el enlace');
-            window.location.href = data.url;
-          } catch (err) {
-            alert('No se pudo iniciar la verificación: ' + (err.message || 'error desconocido'));
-            b.disabled = false;
-            b.textContent = 'Reintentar verificación';
-          }
-        });
+        document.getElementById('kyc-retry').addEventListener('click', (ev) =>
+          iniciarKyc(ev.currentTarget, 'Intentar de nuevo'));
         return;
       }
 
@@ -276,25 +290,8 @@
             window.location.href = '/dashboard/fotos.html';
           }
         }, 6000);
-        document.getElementById('kyc-resume').addEventListener('click', async (ev) => {
-          const b = ev.currentTarget;
-          b.disabled = true;
-          b.textContent = 'Abriendo verificación...';
-          try {
-            const { data, error } = await window.supabaseClient.functions.invoke('crear-kyc', { body: {} });
-            if (error) {
-              let motivo = '';
-              try { motivo = (await error.context?.json())?.error || ''; } catch {}
-              throw new Error(motivo || 'sin respuesta del servidor');
-            }
-            if (!data?.url) throw new Error('el proveedor no devolvió el enlace');
-            window.location.href = data.url;
-          } catch (err) {
-            alert('No se pudo iniciar la verificación: ' + (err.message || 'error desconocido'));
-            b.disabled = false;
-            b.textContent = 'Retomar verificación';
-          }
-        });
+        document.getElementById('kyc-resume').addEventListener('click', (ev) =>
+          iniciarKyc(ev.currentTarget, 'Retomar verificación'));
         return;
       }
 
@@ -379,27 +376,8 @@
       });
 
       // 3. Iniciar verificación biométrica (Didit)
-      document.getElementById('kyc-btn').addEventListener('click', async () => {
-        const btn = document.getElementById('kyc-btn');
-        btn.disabled = true;
-        btn.textContent = 'Abriendo verificación...';
-        try {
-          const { data, error } = await window.supabaseClient.functions.invoke('crear-kyc', { body: {} });
-          // invoke() colapsa cualquier no-2xx en un error genérico; el motivo
-          // real viaja en el body. Lo leemos para mostrarle a ella qué corregir.
-          if (error) {
-            let motivo = '';
-            try { motivo = (await error.context?.json())?.error || ''; } catch {}
-            throw new Error(motivo || 'sin respuesta del servidor');
-          }
-          if (!data?.url) throw new Error('el proveedor no devolvió el enlace');
-          window.location.href = data.url;
-        } catch (err) {
-          alert('No se pudo iniciar la verificación: ' + (err.message || 'error desconocido'));
-          btn.disabled = false;
-          btn.textContent = 'Verificar identidad ahora';
-        }
-      });
+      document.getElementById('kyc-btn').addEventListener('click', (ev) =>
+        iniciarKyc(ev.currentTarget, 'Verificar identidad ahora'));
 
       function renderBanner(estado) {
         const map = {

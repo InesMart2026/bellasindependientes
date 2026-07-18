@@ -75,6 +75,25 @@ Deno.serve(async (req) => {
       return json({ error: 'esta identidad fue vetada de la plataforma' }, 403);
     }
 
+    // Límite de intentos: 3 sesiones por hora. Evita el bucle de reintentos
+    // de liveness (LIVENESS_MAX_ATTEMPTS_EXCEEDED de Didit) y da tiempo a
+    // corregir luz/encuadre. Al 3.º intento fallido, espera hasta que la
+    // sesión más vieja de la ventana cumpla 1 hora.
+    const MAX_INTENTOS = 3;
+    const { data: intentos } = await admin
+      .rpc('kyc_attempts_last_hour', { escort_id_param: escort.id })
+      .maybeSingle();
+
+    if (intentos && intentos.intentos >= MAX_INTENTOS) {
+      // El enfriamiento vence 1h después del intento más reciente de la ventana.
+      const disponibleEn = new Date(new Date(intentos.ultimo_at).getTime() + 3600_000);
+      const restanteMin = Math.max(1, Math.ceil((disponibleEn.getTime() - Date.now()) / 60_000));
+      return json({
+        error: `Superaste los intentos de validación. Podés volver a intentar en ${restanteMin} minuto${restanteMin === 1 ? '' : 's'}.`,
+        retry_after_min: restanteMin,
+      }, 429);
+    }
+
     // 2. Crear la sesión en Didit (API v3)
     // callback = a dónde vuelve la escort al terminar el KYC. NO se la manda de
     // vuelta a verificacion.html: ahí ya cargó todo y el widget la reenviaba a
