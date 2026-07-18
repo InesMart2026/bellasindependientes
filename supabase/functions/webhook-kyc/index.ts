@@ -12,6 +12,7 @@
 // Secrets: DIDIT_WEBHOOK_SECRET, SB_URL, SB_SERVICE_ROLE
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { esHorarioSilencio, enviarAvisoRevision } from '../_shared/notificar-revision.ts';
 
 const REPLAY_WINDOW_S = 300; // 5 minutos
 
@@ -98,6 +99,20 @@ Deno.serve(async (req) => {
     if (error) {
       console.error('activate_verification error:', error);
       return new Response('rpc error', { status: 500 });
+    }
+
+    // 5. Aviso a Ines si el caso cayó en revisión manual (zona gris). De día
+    //    se avisa al instante; de noche se guarda silencio y el cron matinal
+    //    manda el resumen. tomar_pendientes marca lo enviado para no repetir.
+    //    Un fallo de mail no revierte nada: el perfil ya quedó en la cola.
+    if (!esHorarioSilencio()) {
+      try {
+        const { data: pend } = await admin.rpc('kyc_tomar_pendientes_sin_notificar');
+        const nombres = (pend ?? []).map((p: { nombre: string }) => p.nombre);
+        if (nombres.length) await enviarAvisoRevision(nombres);
+      } catch (mailErr) {
+        console.error('aviso de revisión falló (no bloquea):', mailErr);
+      }
     }
 
     return new Response('ok', { status: 200 });

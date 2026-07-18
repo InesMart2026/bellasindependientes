@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" type="image/png" sizes="32x32" href="/img/favicon-32.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="/img/favicon-192.png">
+  <link rel="apple-touch-icon" href="/img/apple-touch-icon.png">
+  <title>Revisión de perfiles — Admin Bellas Independientes</title>
+  <meta name="robots" content="noindex,nofollow">
+  <link rel="stylesheet" href="/css/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/js/supabase.js"></script>
+  <style>
+    :root { --danger: #e05252; --ok: #4a9a6a; }
+    body { max-width: 1100px; margin: 0 auto; padding: 2rem 1.25rem 4rem; }
+    .admin-head { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 2rem; }
+    .admin-head h1 { font-size: 1.5rem; }
+    .admin-gate { max-width: 420px; margin: 4rem auto; }
+    .admin-gate p { color: var(--text-secondary); margin-bottom: 1.5rem; font-size: .9rem; }
+    label { display: block; font-size: .85rem; color: var(--text-secondary); margin-bottom: .4rem; }
+    input {
+      width: 100%; background: var(--bg-secondary); border: 1px solid var(--border);
+      color: var(--text-primary); padding: .7rem; border-radius: 6px; font: inherit;
+    }
+    input:focus { outline: none; border-color: var(--gold); }
+    .msg { padding: .9rem 1rem; border-radius: 8px; margin-bottom: 1.25rem; font-size: .9rem; display: none; }
+    .msg.ok  { display: block; background: rgba(212,175,55,.08); border: 1px solid var(--gold); color: var(--gold-light); }
+    .msg.err { display: block; background: rgba(224,82,82,.08); border: 1px solid var(--danger); color: #f0a5a5; }
+
+    .toolbar { display: flex; gap: .75rem; align-items: center; margin-bottom: 1.5rem; }
+    .count { color: var(--text-secondary); font-size: .85rem; margin-left: auto; }
+
+    /* Tarjeta de revisión: foto pública + scores + decisión. */
+    .rev { display: grid; grid-template-columns: 120px 1fr; gap: 1.1rem;
+           border: 1px solid var(--border); border-radius: 10px; padding: 1.1rem;
+           margin-bottom: 1rem; background: var(--bg-card); }
+    .rev-foto { width: 120px; height: 150px; border-radius: 8px; object-fit: cover;
+                background: var(--bg-secondary); }
+    .rev-foto.placeholder { display: flex; align-items: center; justify-content: center;
+                            font-size: .75rem; color: var(--text-secondary); text-align: center; padding: .5rem; }
+    .rev-body { display: flex; flex-direction: column; }
+    .rev-top { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: .5rem; }
+    .rev-nombre { font-weight: 700; font-size: 1.05rem; }
+    .rev-nombre a { color: var(--gold); text-decoration: none; }
+    .rev-fecha { font-size: .78rem; color: var(--text-secondary); }
+    .scores { display: flex; gap: 1.25rem; margin: .75rem 0 1rem; }
+    .score { font-size: .82rem; color: var(--text-secondary); }
+    .score b { display: block; font-size: 1.35rem; color: var(--text-primary); font-weight: 700; }
+    .score.low b { color: var(--danger); }
+    .score.mid b { color: var(--gold); }
+    .rev-actions { display: flex; gap: .6rem; flex-wrap: wrap; margin-top: auto; }
+    .btn-sm { padding: .55rem 1.1rem; font-size: .85rem; border-radius: 6px; cursor: pointer;
+              border: 1px solid var(--border); background: transparent; color: var(--text-primary); }
+    .btn-approve { background: var(--ok); border-color: var(--ok); color: #fff; }
+    .btn-reject  { color: #f0a5a5; border-color: var(--danger); }
+    .btn-sm:disabled { opacity: .5; cursor: default; }
+    .empty { text-align: center; color: var(--text-secondary); padding: 3rem 1rem; }
+    .logout, .reload { background: none; border: none; color: var(--text-secondary);
+              cursor: pointer; font-size: .85rem; text-decoration: underline; width: auto; padding: 0; }
+    @media (max-width: 560px) {
+      .rev { grid-template-columns: 90px 1fr; }
+      .rev-foto { width: 90px; height: 120px; }
+    }
+  </style>
+</head>
+<body>
+  <!-- Puerta de acceso: pide la clave admin. Nunca se hardcodea. -->
+  <div id="gate" class="admin-gate">
+    <a href="/" class="header-logo" style="display:block;text-align:center;margin-bottom:1.5rem;">Bellas Independientes</a>
+    <h2 style="text-align:center;margin-bottom:1rem;">Revisión de perfiles</h2>
+    <p>Ingresá la clave de administración. Se guarda solo en esta pestaña y se borra al cerrarla.</p>
+    <div id="gate-msg" class="msg"></div>
+    <form id="gate-form">
+      <label for="adminkey">Clave admin</label>
+      <input type="password" id="adminkey" autocomplete="off" required>
+      <button type="submit" class="btn btn-gold" style="width:100%;margin-top:1rem;">Entrar</button>
+    </form>
+  </div>
+
+  <!-- Panel (oculto hasta validar la clave) -->
+  <div id="panel" style="display:none;">
+    <div class="admin-head">
+      <h1>Perfiles a revisar</h1>
+      <button class="logout" id="logout">Cerrar sesión</button>
+    </div>
+
+    <div id="msg" class="msg"></div>
+
+    <div class="toolbar">
+      <button class="reload" id="reload">Actualizar</button>
+      <span class="count" id="count"></span>
+    </div>
+
+    <div id="list"></div>
+  </div>
+
+  <script>
+    const FN_BASE = 'https://nvhjnopnonsrbyyvalvx.functions.supabase.co';
+    let ADMIN_KEY = sessionStorage.getItem('be_admin_key') || '';
+
+    const esc = (s) => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+    // Supabase exige un Authorization con la anon key en toda Edge Function:
+    // sin él rechaza la request ANTES de ejecutar nuestro código (401), lo que
+    // se confundiría con una clave admin mala. La anon key no autoriza nada:
+    // la autorización real es X-Admin-Key, que valida la función.
+    async function callFn(path, body) {
+      try {
+        const res = await fetch(FN_BASE + path, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + SUPABASE_ANON_KEY,
+            'apikey': SUPABASE_ANON_KEY,
+            'X-Admin-Key': ADMIN_KEY,
+          },
+          body: JSON.stringify(body || {}),
+        });
+        const data = await res.json().catch(() => ({}));
+        return { status: res.status, data };
+      } catch (err) {
+        console.error('callFn falló:', err);
+        return { status: 0, data: {} };
+      }
+    }
+
+    function showMsg(el, text, kind) {
+      el.textContent = text;
+      el.className = 'msg ' + kind;
+    }
+
+    // ── Puerta de acceso ──────────────────────────────────────────
+    document.getElementById('gate-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      ADMIN_KEY = document.getElementById('adminkey').value.trim();
+      const gateMsg = document.getElementById('gate-msg');
+      const btn = e.target.querySelector('button');
+      btn.disabled = true; btn.textContent = 'Verificando…';
+
+      // Se valida la clave intentando listar. Si es correcta, 200; si no, 401.
+      const { status } = await callFn('/admin-kyc', { accion: 'listar' });
+      btn.disabled = false; btn.textContent = 'Entrar';
+
+      if (status === 401) {
+        showMsg(gateMsg, 'Clave incorrecta.', 'err');
+        return;
+      }
+      if (status !== 200) {
+        showMsg(gateMsg, 'No se pudo conectar. Revisá que las funciones estén deployadas.', 'err');
+        return;
+      }
+      sessionStorage.setItem('be_admin_key', ADMIN_KEY);
+      document.getElementById('gate').style.display = 'none';
+      document.getElementById('panel').style.display = 'block';
+      loadPendientes();
+    });
+
+    document.getElementById('logout').addEventListener('click', () => {
+      sessionStorage.removeItem('be_admin_key');
+      location.reload();
+    });
+    document.getElementById('reload').addEventListener('click', loadPendientes);
+
+    // ── Listado ───────────────────────────────────────────────────
+    async function loadPendientes() {
+      const list = document.getElementById('list');
+      const msg = document.getElementById('msg');
+      const count = document.getElementById('count');
+      msg.className = 'msg';
+      list.innerHTML = '<p class="empty">Cargando…</p>';
+
+      const { status, data } = await callFn('/admin-kyc', { accion: 'listar' });
+      if (status !== 200 || !data.ok) {
+        list.innerHTML = '';
+        count.textContent = '';
+        showMsg(msg, data.error || 'No se pudieron cargar los perfiles.', 'err');
+        return;
+      }
+
+      const items = data.pendientes || [];
+      count.textContent = items.length ? `${items.length} pendiente${items.length > 1 ? 's' : ''}` : '';
+      if (!items.length) {
+        list.innerHTML = '<p class="empty">No hay perfiles esperando revisión. 🎉</p>';
+        return;
+      }
+      list.innerHTML = items.map(renderRev).join('');
+    }
+
+    // Colorea el score: <85 rojo (no debería llegar acá), 85-90 dorado (gris), >=90 normal.
+    function scoreClass(n) {
+      const v = Number(n) || 0;
+      if (v < 85) return 'low';
+      if (v < 90) return 'mid';
+      return '';
+    }
+
+    function renderRev(r) {
+      const fecha = new Date(r.created_at).toLocaleString('es-AR');
+      const face = Math.round(Number(r.face_score) || 0);
+      const live = Math.round(Number(r.liveness_score) || 0);
+      const foto = r.portada_url
+        ? `<img class="rev-foto" src="${esc(r.portada_url)}" alt="Foto de ${esc(r.nombre)}" loading="lazy">`
+        : `<div class="rev-foto placeholder">Sin foto de portada</div>`;
+      const nombre = r.slug
+        ? `<a href="/perfil.html?slug=${encodeURIComponent(r.slug)}" target="_blank" rel="noopener">${esc(r.nombre)}</a>`
+        : esc(r.nombre);
+
+      return `
+        <div class="rev" data-session="${esc(r.session_id)}">
+          ${foto}
+          <div class="rev-body">
+            <div class="rev-top">
+              <span class="rev-nombre">${nombre}</span>
+              <span class="rev-fecha">${esc(fecha)}</span>
+            </div>
+            <div class="scores">
+              <span class="score ${scoreClass(face)}">Coincidencia facial<b>${face}</b></span>
+              <span class="score ${scoreClass(live)}">Prueba de vida<b>${live}</b></span>
+            </div>
+            <div class="rev-actions">
+              <button class="btn-sm btn-approve">Aprobar</button>
+              <button class="btn-sm btn-reject">Rechazar</button>
+            </div>
+          </div>
+        </div>`;
+    }
+
+    // ── Acciones (delegación de eventos) ──────────────────────────
+    document.getElementById('list').addEventListener('click', async (e) => {
+      const card = e.target.closest('.rev');
+      if (!card) return;
+      const sessionId = card.dataset.session;
+      const msg = document.getElementById('msg');
+
+      const aprobar = e.target.classList.contains('btn-approve');
+      const rechazar = e.target.classList.contains('btn-reject');
+      if (!aprobar && !rechazar) return;
+
+      const verbo = aprobar ? 'aprobar y publicar' : 'rechazar';
+      if (!confirm(`¿Seguro que querés ${verbo} este perfil?`)) return;
+
+      card.querySelectorAll('button').forEach(b => b.disabled = true);
+      const { status, data } = await callFn('/admin-kyc', {
+        accion: 'resolver',
+        session_id: sessionId,
+        aprobar,
+      });
+
+      if (status === 200 && data.ok) {
+        showMsg(msg, aprobar ? 'Perfil aprobado y publicado.' : 'Perfil rechazado.', 'ok');
+        card.remove();
+        // Actualizar el contador sin recargar todo.
+        const restantes = document.querySelectorAll('#list .rev').length;
+        document.getElementById('count').textContent =
+          restantes ? `${restantes} pendiente${restantes > 1 ? 's' : ''}` : '';
+        if (!restantes) document.getElementById('list').innerHTML =
+          '<p class="empty">No hay perfiles esperando revisión. 🎉</p>';
+      } else {
+        showMsg(msg, data.error || 'No se pudo resolver. Actualizá y probá de nuevo.', 'err');
+        card.querySelectorAll('button').forEach(b => b.disabled = false);
+      }
+    });
+
+    // Si ya había clave en la sesión, entrar directo.
+    if (ADMIN_KEY) {
+      document.getElementById('gate').style.display = 'none';
+      document.getElementById('panel').style.display = 'block';
+      loadPendientes();
+    }
+  </script>
+</body>
+</html>
