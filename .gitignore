@@ -12,3 +12,9 @@ node_modules/
 # Artefactos de captura de pantalla (no son parte del sitio)
 --full-page
 screenshot.png
+
+# wrangler files
+.wrangler
+.dev.vars*
+!.dev.vars.example
+!.env.example
