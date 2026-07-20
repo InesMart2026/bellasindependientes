@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" type="image/png" sizes="32x32" href="/img/favicon-32.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="/img/favicon-192.png">
+  <link rel="apple-touch-icon" href="/img/apple-touch-icon.png">
+  <meta name="RATING" content="RTA-5042-1996-1400-1577-RTA">
+  <title>Invitación gratis — Bellas Independientes Tucumán</title>
+  <meta name="description" content="Invitación para publicar tu perfil gratis por una semana en Bellas Independientes.">
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="stylesheet" href="/css/style.css">
+  <script src="/js/legal-notices.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/js/supabase.js" defer></script>
+</head>
+<body>
+  <header class="header">
+    <a href="/" class="header-logo">Bellas Independientes</a>
+    <nav class="header-nav">
+      <a href="/mujeres.html">Mujeres</a>
+      <a href="/hombres.html">Hombres</a>
+      <a href="/trans.html">Trans</a>
+      <a href="/masajistas.html">Masajistas</a>
+      <a href="/planes.html">Planes</a>
+      <a href="/dashboard/login.html">Acceder</a>
+    </nav>
+  </header>
+
+  <section class="hours-card" id="invite-card" style="margin-top:2.5rem;">
+    <h3 id="invite-title">Tu semana gratis te espera</h3>
+    <p id="invite-text">
+      Fuiste invitada a publicar tu perfil <strong>gratis por 7 días</strong> en
+      Bellas Independientes. Aparecés en el listado, con tus fotos y contacto
+      directo, sin pagar nada. Al presionar el botón reclamás la invitación:
+      es de un solo uso y personal.
+    </p>
+
+    <button class="btn btn-gold" id="invite-cta">Acceder a mi invitación gratuita</button>
+
+    <p class="hours-note" id="invite-note">
+      Para publicar vas a necesitar verificar tu identidad una sola vez (DNI +
+      selfie). Es un requisito legal. Tu semana gratis empieza a correr recién
+      cuando tu perfil sale publicado.
+    </p>
+  </section>
+
+  <div id="site-footer"></div>
+  <script src="/js/footer.js" defer></script>
+
+  <script>
+    const params = new URLSearchParams(location.search);
+    const code = params.get('code');
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const cta = document.getElementById('invite-cta');
+
+      if (!code) {
+        mostrarError('Este link de invitación no es válido. Pedí uno nuevo.');
+        return;
+      }
+
+      cta.addEventListener('click', reclamar);
+    });
+
+    async function reclamar() {
+      const cta = document.getElementById('invite-cta');
+
+      // Sin sesión → registro/login, y volvemos a este mismo link con el code.
+      const { data: { session } } = await window.supabaseClient.auth.getSession();
+      if (!session) {
+        const next = encodeURIComponent('/invitacion.html?code=' + code);
+        window.location.href = '/dashboard/login.html?next=' + next;
+        return;
+      }
+
+      cta.disabled = true;
+      const original = cta.textContent;
+      cta.textContent = 'Reclamando...';
+
+      const { data, error } = await window.supabaseClient.rpc('canjear_invitacion', {
+        p_codigo: code,
+      });
+
+      if (error || !data?.ok) {
+        cta.disabled = false;
+        cta.textContent = original;
+
+        const motivo = data?.error;
+        if (motivo === 'sin_perfil') {
+          // Tiene cuenta pero aún no creó el perfil: lo crea y vuelve.
+          alert('Primero creá tu perfil (nombre, categoría). Después volvé a este link para reclamar tu semana gratis.');
+          window.location.href = '/dashboard/perfil.html';
+          return;
+        }
+        if (motivo === 'ya_tiene_credito') {
+          mostrarError('Ya tenés una invitación reclamada. Verificá tu identidad y publicá para usarla.');
+          return;
+        }
+        // invitacion_invalida (usada, vencida o inexistente) y cualquier otro caso.
+        mostrarError('Esta invitación ya no está disponible: puede haber sido usada o estar vencida.');
+        return;
+      }
+
+      // Reclamada. La semana se activa al publicar (post-KYC) desde el dashboard.
+      document.getElementById('invite-title').textContent = '¡Invitación reclamada!';
+      document.getElementById('invite-text').innerHTML =
+        'Ya tenés <strong>' + data.dias + ' días gratis</strong> reservados. ' +
+        'El último paso: verificá tu identidad y publicá tu perfil. Tu semana ' +
+        'empieza a correr cuando salís al aire.';
+      cta.textContent = 'Ir a mi panel';
+      cta.disabled = false;
+      cta.onclick = () => { window.location.href = '/dashboard/'; };
+    }
+
+    function mostrarError(msg) {
+      document.getElementById('invite-text').textContent = msg;
+      const cta = document.getElementById('invite-cta');
+      cta.style.display = 'none';
+      document.getElementById('invite-note').style.display = 'none';
+    }
+  </script>
+</body>
+</html>
