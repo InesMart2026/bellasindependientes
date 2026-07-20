@@ -51,7 +51,7 @@
 
       const { data: escort } = await window.supabaseClient
         .from('escorts')
-        .select('id, activa, visible_hasta, estado_verificacion')
+        .select('id, activa, visible_hasta, estado_verificacion, credito_dias_gratis')
         .eq('user_id', user.id)
         .single();
 
@@ -77,6 +77,39 @@
               ${enProceso ? 'Ver estado de verificación' : 'Verificar identidad'}
             </a>
           </div>`;
+      }
+
+      // ── Semana gratis por invitación ─────────────────────────
+      // Si reclamó una invitación (credito_dias_gratis > 0) y ya está
+      // verificada, puede aplicar el crédito acá. Suma los días vía la
+      // misma RPC que activate_slot; no pasa por MercadoPago.
+      if (verificada && escort.credito_dias_gratis > 0) {
+        const gate = document.getElementById('verif-gate');
+        const box = document.createElement('div');
+        box.className = 'plan-card plan-card--featured';
+        box.style.cssText = 'text-align:left;margin-bottom:1.5rem;';
+        box.innerHTML = `
+          <p style="color:var(--gold);font-size:1.1rem;margin-bottom:.5rem;">Tenés una semana gratis</p>
+          <p style="color:var(--text-secondary);font-size:.9rem;margin-bottom:1rem;">
+            Reclamaste una invitación de ${escort.credito_dias_gratis} días gratis.
+            Publicá ahora y tu perfil sale al listado sin costo.
+          </p>
+          <button class="btn btn-gold" id="usar-credito" style="display:inline-block;">Publicar mi semana gratis</button>`;
+        gate.appendChild(box);
+
+        document.getElementById('usar-credito').addEventListener('click', async (e) => {
+          const btn = e.target;
+          btn.disabled = true;
+          btn.textContent = 'Activando...';
+          const { data, error } = await window.supabaseClient.rpc('aplicar_credito_gratis');
+          if (error || !data?.ok) {
+            btn.disabled = false;
+            btn.textContent = 'Publicar mi semana gratis';
+            alert('No se pudo activar tu semana gratis. Intentá de nuevo en un momento.');
+            return;
+          }
+          window.location.reload();
+        });
       }
 
       // ── Estado del slot ──────────────────────────────────────
