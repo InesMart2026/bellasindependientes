@@ -72,11 +72,10 @@ a:hover { color: var(--gold-light); }
 
 .hero-item {
   position: relative;
-  overflow: hidden;
   cursor: pointer;
 }
 
-.hero-item img { width: 100%; height: 100%; object-fit: cover; }
+.hero-item img { width: 100%; height: 100%; object-fit: cover; overflow: hidden; }
 .hero-item:first-child { grid-row: 1 / 3; }
 
 /* Marcos decorativos por categoría */
