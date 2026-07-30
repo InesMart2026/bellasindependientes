@@ -31,6 +31,21 @@
     <priority>0.5</priority>
   </url>
   <url>
+    <loc>https://bellasindependientes.com/perfil.html</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://bellasindependientes.com/denunciar.html</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.3</priority>
+  </url>
+  <url>
+    <loc>https://bellasindependientes.com/invitacion.html</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.3</priority>
+  </url>
+  <url>
     <loc>https://bellasindependientes.com/legal/aviso-legal.html</loc>
     <changefreq>monthly</changefreq>
     <priority>0.3</priority>
@@ -42,6 +57,41 @@
   </url>
   <url>
     <loc>https://bellasindependientes.com/legal/condiciones.html</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.3</priority>
+  </url>
+  <url>
+    <loc>https://bellasindependientes.com/legal/cookies.html</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.3</priority>
+  </url>
+  <url>
+    <loc>https://bellasindependientes.com/legal/denunciar-trata.html</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.3</priority>
+  </url>
+  <url>
+    <loc>https://bellasindependientes.com/legal/dmca.html</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.3</priority>
+  </url>
+  <url>
+    <loc>https://bellasindependientes.com/legal/proteccion-menores.html</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.3</priority>
+  </url>
+  <url>
+    <loc>https://bellasindependientes.com/legal/retiro-contenido.html</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.3</priority>
+  </url>
+  <url>
+    <loc>https://bellasindependientes.com/legal/contacto.html</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.3</priority>
+  </url>
+  <url>
+    <loc>https://bellasindependientes.com/legal/2257.html</loc>
     <changefreq>monthly</changefreq>
     <priority>0.3</priority>
   </url>
