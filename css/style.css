@@ -45,6 +45,12 @@ a:hover { color: var(--gold-light); }
   letter-spacing: 3px;
 }
 
+.header-logo img {
+  height: 44px;
+  width: auto;
+  display: block;
+}
+
 .header-nav { display: flex; gap: 2rem; align-items: center; }
 .header-nav a { color: var(--text-secondary); font-size: .9rem; text-transform: uppercase; letter-spacing: 1px; }
 .header-nav a:hover { color: var(--gold); }
