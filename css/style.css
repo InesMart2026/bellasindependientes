@@ -46,9 +46,15 @@ a:hover { color: var(--gold-light); }
 }
 
 .header-logo img {
-  height: 44px;
+  height: 88px;
   width: auto;
   display: block;
+}
+
+@media (max-width: 640px) {
+  .header-logo img {
+    height: 72px;
+  }
 }
 
 .header-nav { display: flex; gap: 2rem; align-items: center; }
