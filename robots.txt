@@ -1,6 +1,4 @@
 User-agent: *
 Allow: /
-Disallow: /dashboard/
-Disallow: /supabase/
 
 Sitemap: https://bellasindependientes.com/sitemap.xml

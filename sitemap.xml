@@ -31,21 +31,6 @@
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://bellasindependientes.com/perfil.html</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.5</priority>
-  </url>
-  <url>
-    <loc>https://bellasindependientes.com/denunciar.html</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.3</priority>
-  </url>
-  <url>
-    <loc>https://bellasindependientes.com/invitacion.html</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.3</priority>
-  </url>
-  <url>
     <loc>https://bellasindependientes.com/legal/aviso-legal.html</loc>
     <changefreq>monthly</changefreq>
     <priority>0.3</priority>
