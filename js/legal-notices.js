@@ -129,12 +129,16 @@
       showCookies();
     });
     overlay.querySelector('[data-ecr="age-no"]').addEventListener('click', function () {
-      window.location.href = 'https://www.google.com';
+      document.documentElement.classList.remove('ecr-noscroll');
+      document.body.classList.remove('ecr-noscroll');
+      overlay.remove();
+      showCookies();
     });
   }
 
   function init() {
     injectStyles();
+    // Check for age confirmation
     if (ageConfirmed()) {
       showCookies();
     } else {
