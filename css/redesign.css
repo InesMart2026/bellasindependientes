@@ -1,0 +1,972 @@
+/* =========================================================================
+   Bellas Independientes — Rediseño visual
+   -------------------------------------------------------------------------
+   Capa de estilos cargada DESPUÉS de style.css. Solo se incluye en
+   index.html y en las páginas de categoría. No modifica style.css, así que
+   revertir el rediseño = borrar los <link> a este archivo.
+
+   No tocar: .card / .card-img / .card-badge / .card-body se generan desde
+   js/gallery.js. Acá solo se les cambia el aspecto.
+   ========================================================================= */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@600;700&display=swap');
+
+/* =========================================================================
+   1. TOKENS
+   ========================================================================= */
+:root {
+  /* Marca */
+  --brand: #4A8BC9;
+  --brand-dark: #1B3F7A;
+  --brand-deep: #0F2447;
+  --accent: #8E1D4A;
+  --gold: #D4AF37;
+
+  /* Superficies */
+  --bg-primary: #FFFFFF;
+  --bg-secondary: #F4F6FA;
+  --bg-sunken: #EDF1F7;
+  --bg-card: #FFFFFF;
+
+  /* Texto */
+  --text-primary: #14213D;
+  --text-secondary: #5A6B85;
+  --text-muted: #8A99B0;
+
+  /* Bordes */
+  --border: #E1E7F0;
+  --border-strong: #CBD5E4;
+
+  /* Formas */
+  --radius-sm: 10px;
+  --radius: 16px;
+  --radius-lg: 22px;
+  --radius-pill: 999px;
+
+  --shadow-sm: 0 2px 10px rgba(20, 33, 61, .06);
+  --shadow: 0 8px 28px rgba(20, 33, 61, .09);
+  --shadow-lg: 0 18px 50px rgba(20, 33, 61, .16);
+
+  /* Movimiento */
+  --ease: cubic-bezier(.2, .7, .3, 1);
+
+  --font-display: 'Poppins', 'Inter', system-ui, sans-serif;
+  --font-body: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+
+  --shell: 1240px;
+}
+
+/* =========================================================================
+   2. BASE
+   ========================================================================= */
+body {
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-size: 16px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3 {
+  font-family: var(--font-display);
+  color: var(--text-primary);
+  letter-spacing: -.02em;
+}
+
+a { color: var(--brand-dark); }
+a:hover { color: var(--brand); }
+
+.shell {
+  max-width: var(--shell);
+  margin: 0 auto;
+  padding: 0 1.5rem;
+}
+
+:focus-visible {
+  outline: 3px solid var(--brand);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+/* Encabezado editorial de sección, compartido por todas las secciones */
+.section-head {
+  max-width: var(--shell);
+  margin: 0 auto;
+  padding: 4.5rem 1.5rem 2rem;
+  text-align: center;
+}
+
+.section-kicker {
+  display: inline-block;
+  font-size: .72rem;
+  font-weight: 600;
+  letter-spacing: .22em;
+  text-transform: uppercase;
+  color: var(--brand);
+  margin-bottom: .75rem;
+}
+
+.section-head-title {
+  font-size: clamp(1.7rem, 4vw, 2.6rem);
+  font-weight: 700;
+  line-height: 1.15;
+  margin: 0;
+}
+
+.section-head-sub {
+  margin: .75rem auto 0;
+  max-width: 46ch;
+  color: var(--text-secondary);
+  font-size: .78rem;
+  font-weight: 500;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+}
+
+/* Título suelto de las páginas de categoría */
+.section-title {
+  max-width: var(--shell);
+  margin: 0 auto;
+  padding: 3.5rem 1.5rem 1rem;
+  font-size: clamp(1.9rem, 4.5vw, 2.8rem);
+  font-weight: 700;
+  text-align: center;
+}
+
+/* =========================================================================
+   3. HEADER
+   Blanco, sticky, con una sola fila. En mobile la navegación se vuelve una
+   fila scrolleable en vez de un hamburguesa: mismo acceso a los 6 enlaces,
+   sin JS y sin menú oculto tras un click.
+   ========================================================================= */
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: rgba(255, 255, 255, .92);
+  backdrop-filter: saturate(180%) blur(12px);
+  -webkit-backdrop-filter: saturate(180%) blur(12px);
+  border-bottom: 1px solid var(--border);
+  box-shadow: 0 1px 3px rgba(20, 33, 61, .04);
+  padding: 0;
+}
+
+.header-bar {
+  max-width: var(--shell);
+  margin: 0 auto;
+  padding: .75rem 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+}
+
+.header-logo { flex-shrink: 0; display: flex; align-items: center; min-height: 44px; }
+
+.header-logo img {
+  height: 60px;
+  width: auto;
+  display: block;
+}
+
+.header-nav {
+  display: flex;
+  align-items: center;
+  gap: .25rem;
+  margin-left: auto;
+}
+
+.header-nav a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  color: var(--text-secondary);
+  font-size: .78rem;
+  font-weight: 500;
+  letter-spacing: .07em;
+  text-transform: uppercase;
+  padding: .55rem .7rem;
+  border-radius: var(--radius-sm);
+  white-space: nowrap;
+  transition: color .2s var(--ease), background-color .2s var(--ease);
+}
+
+.header-nav a:hover {
+  color: var(--brand-dark);
+  background: var(--bg-secondary);
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: .4rem;
+  flex-shrink: 0;
+}
+
+.header-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-pill);
+  color: var(--text-secondary);
+  transition: color .2s var(--ease), background-color .2s var(--ease);
+}
+
+.header-icon svg { width: 20px; height: 20px; }
+.header-icon:hover { color: var(--brand-dark); background: var(--bg-secondary); }
+
+.header-cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  margin-left: .35rem;
+  padding: .65rem 1.35rem;
+  background: var(--brand);
+  color: #fff;
+  font-size: .76rem;
+  font-weight: 600;
+  letter-spacing: .07em;
+  text-transform: uppercase;
+  border-radius: var(--radius-pill);
+  white-space: nowrap;
+  box-shadow: 0 4px 14px rgba(74, 139, 201, .32);
+  transition: background-color .2s var(--ease), transform .2s var(--ease),
+              box-shadow .2s var(--ease);
+}
+
+.header-cta:hover {
+  background: var(--brand-dark);
+  color: #fff;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 22px rgba(27, 63, 122, .32);
+}
+
+@media (max-width: 1080px) {
+  .header-bar { flex-wrap: wrap; gap: .75rem 1rem; }
+  .header-nav {
+    order: 3;
+    width: 100%;
+    margin-left: 0;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: .25rem;
+  }
+  .header-nav::-webkit-scrollbar { display: none; }
+  .header-actions { margin-left: auto; }
+}
+
+@media (max-width: 560px) {
+  .header-bar { padding: .6rem 1rem; }
+  .header-logo img { height: 48px; }
+  .header-cta { padding: .6rem .9rem; font-size: .68rem; }
+  .section-head { padding: 3rem 1rem 1.5rem; }
+}
+
+/* =========================================================================
+   4. HERO
+   Una sola imagen a ancho completo. El degradado va fuerte a propósito: la
+   foto de fondo es de 100x49 px y con una capa liviana se lee como bloque de
+   píxeles. Al 80%+ se percibe como textura, no como error.
+   Las 3 fotos del mosaico original siguen en el markup, ocultas acá.
+   ========================================================================= */
+.hero {
+  display: block;
+  position: relative;
+  height: clamp(420px, 46vw, 520px);
+  overflow: hidden;
+  background: var(--brand-deep);
+}
+
+.hero-stage {
+  position: relative;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  background-image: url('/img/mujer2.webp');
+  background-size: cover;
+  background-position: 78% center;
+  background-repeat: no-repeat;
+}
+
+/* Capa de color: navy a la izquierda → magenta/borgoña a la derecha */
+.hero-stage::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(100deg,
+      rgba(15, 36, 71, .96) 0%,
+      rgba(27, 63, 122, .9) 38%,
+      rgba(74, 60, 122, .78) 66%,
+      rgba(142, 29, 74, .7) 100%);
+}
+
+/* Velo extra abajo: asegura contraste del texto sobre cualquier encuadre */
+.hero-stage::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(10, 24, 48, .55) 0%, transparent 55%);
+  pointer-events: none;
+}
+
+.hero-copy {
+  position: relative;
+  z-index: 1;
+  max-width: var(--shell);
+  width: 100%;
+  margin: 0 auto;
+  padding: 3rem 1.5rem;
+  color: #fff;
+}
+
+.hero-copy h1 {
+  margin: 0;
+  color: #fff;
+  font-size: clamp(1.95rem, 4.6vw, 3.1rem);
+  font-weight: 700;
+  line-height: 1.08;
+  text-shadow: 0 2px 24px rgba(10, 24, 48, .45);
+}
+
+/* Una frase por línea, siempre. El wrap automático partía
+   "Nosotros mostramos" al medio en desktop. */
+.hero-copy h1 span { display: block; }
+
+.hero-lead {
+  max-width: 44ch;
+  margin: 1rem 0 0;
+  font-size: clamp(.95rem, 1.6vw, 1.08rem);
+  color: rgba(255, 255, 255, .9);
+}
+
+/* Barra decorativa. Sin input: es un elemento visual, no un campo de
+   búsqueda. Los enlaces de categoría de abajo sí llevan a las páginas. */
+.hero-search {
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  max-width: 620px;
+  margin: 2rem 0 0;
+  padding: 1rem 1.4rem;
+  min-height: 60px;
+  background: #fff;
+  border-radius: var(--radius-pill);
+  box-shadow: var(--shadow-lg);
+}
+
+.hero-search-icon { flex-shrink: 0; display: flex; color: var(--brand-dark); }
+.hero-search-icon svg { width: 21px; height: 21px; }
+
+.hero-search-text {
+  color: var(--text-muted);
+  font-size: .95rem;
+  user-select: none;
+}
+
+/* Categorías: se vuelven pills dentro del hero. Estructura y href intactos. */
+.categories-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .5rem;
+  margin-top: 1.5rem;
+  padding: 0;
+}
+
+.cat-btn {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: .6rem 1.25rem;
+  background: rgba(255, 255, 255, .12);
+  border: 1px solid rgba(255, 255, 255, .38);
+  color: #fff;
+  font-size: .78rem;
+  font-weight: 600;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  border-radius: var(--radius-pill);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  transition: background-color .2s var(--ease), border-color .2s var(--ease),
+              transform .2s var(--ease);
+}
+
+.cat-btn:hover {
+  background: #fff;
+  border-color: #fff;
+  color: var(--brand-deep);
+  transform: translateY(-2px);
+}
+
+/* Mosaico original: oculto, no eliminado. Se revivite quitando esta regla. */
+.hero > .hero-item { display: none; }
+
+@media (max-width: 768px) {
+  .hero { height: clamp(360px, 82vw, 440px); }
+  .hero-stage { background-position: 68% center; }
+  .hero-copy { padding: 2.5rem 1.25rem; }
+  .hero-search { margin-top: 1.5rem; padding: .85rem 1.1rem; min-height: 54px; }
+  .categories-nav { gap: .4rem; }
+  .cat-btn { padding: .5rem .9rem; font-size: .7rem; }
+}
+
+@media (max-width: 400px) {
+  .hero { height: 400px; }
+  .hero-stage { background-position: 62% center; }
+  .hero-lead { display: none; }
+}
+
+/* =========================================================================
+   5. CARDS DE CATEGORÍAS
+   ========================================================================= */
+.cat-section {
+  background: var(--bg-primary);
+  padding-bottom: 1rem;
+}
+
+.cat-grid {
+  max-width: var(--shell);
+  margin: 0 auto;
+  padding: 0 1.5rem 4rem;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.75rem;
+}
+
+.cat-card {
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  color: var(--text-primary);
+  box-shadow: var(--shadow-sm);
+  transition: transform .28s var(--ease), box-shadow .28s var(--ease),
+              border-color .28s var(--ease);
+}
+
+.cat-card:hover {
+  color: var(--text-primary);
+  transform: translateY(-6px);
+  border-color: var(--border-strong);
+  box-shadow: var(--shadow-lg);
+}
+
+.cat-card-media {
+  position: relative;
+  /* Vertical a propósito: las fotos de categoría son retrato. En 3:2 el
+     recorte sacaba las caras y dejaba solo fragmentos de cuerpo. */
+  aspect-ratio: 4 / 5;
+  overflow: hidden;
+  background: var(--bg-sunken);
+}
+
+.cat-card-media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 22%;
+  display: block;
+  transition: transform .4s var(--ease);
+}
+
+.cat-card:hover .cat-card-media img { transform: scale(1.05); }
+
+/* Degradado bajo el nombre: garantiza contraste sin tapar la foto */
+.cat-card-media::after {
+  content: '';
+  position: absolute;
+  inset: 30% 0 0;
+  background: linear-gradient(to top, rgba(10, 20, 40, .9) 0%, rgba(10, 20, 40, .45) 45%, transparent 100%);
+  pointer-events: none;
+}
+
+.cat-card-title {
+  position: absolute;
+  z-index: 1;
+  left: 1.25rem;
+  right: 1.25rem;
+  bottom: .9rem;
+  margin: 0;
+  color: #fff;
+  font-size: 1.45rem;
+  font-weight: 700;
+  text-shadow: 0 2px 14px rgba(0, 0, 0, .6);
+}
+
+.cat-card-body {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  gap: 1.1rem;
+  padding: 1.35rem 1.4rem 1.5rem;
+}
+
+.cat-card-body p {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: .9rem;
+  line-height: 1.6;
+}
+
+.cat-card-btn {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: .45rem;
+  min-height: 44px;
+  margin-top: auto;
+  padding: .6rem 1.3rem;
+  background: transparent;
+  border: 1.5px solid var(--brand);
+  color: var(--brand-dark);
+  font-size: .76rem;
+  font-weight: 600;
+  letter-spacing: .09em;
+  text-transform: uppercase;
+  border-radius: var(--radius-pill);
+  transition: background-color .2s var(--ease), color .2s var(--ease);
+}
+
+.cat-card-btn svg { width: 15px; height: 15px; transition: transform .2s var(--ease); }
+
+.cat-card:hover .cat-card-btn {
+  background: var(--brand);
+  color: #fff;
+}
+
+.cat-card:hover .cat-card-btn svg { transform: translateX(3px); }
+
+@media (max-width: 900px) {
+  .cat-grid { grid-template-columns: repeat(2, 1fr); gap: 1.25rem; }
+  .cat-card:last-child { grid-column: 1 / -1; max-width: 420px; margin: 0 auto; }
+}
+
+@media (max-width: 620px) {
+  .cat-grid { grid-template-columns: 1fr; padding: 0 1rem 3rem; }
+  .cat-card:last-child { max-width: none; }
+  .cat-card-media { aspect-ratio: 16 / 9; }
+}
+
+/* =========================================================================
+   6. SECCIONES DE LISTADO (feat + explore)
+   Se conservan contenido, orden, ids y funcionalidad. Solo el estilo.
+   ========================================================================= */
+.feat {
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border);
+}
+
+.explore { background: var(--bg-primary); }
+
+.grid {
+  max-width: var(--shell);
+  margin: 0 auto;
+  padding: 0 1.5rem 4rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(240px, 100%), 1fr));
+  gap: 1.5rem;
+}
+
+.grid--feat { grid-template-columns: repeat(auto-fill, minmax(min(260px, 100%), 1fr)); }
+.grid--slots { grid-template-columns: repeat(auto-fill, minmax(min(240px, 100%), 1fr)); }
+
+/* Tarjetas de perfil — el markup lo genera js/gallery.js */
+.card {
+  position: relative;
+  display: block;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  color: var(--text-primary);
+  box-shadow: var(--shadow-sm);
+  transition: transform .28s var(--ease), box-shadow .28s var(--ease),
+              border-color .28s var(--ease), opacity .2s linear;
+}
+
+.card:hover {
+  color: var(--text-primary);
+  transform: translateY(-5px);
+  border-color: var(--border-strong);
+  box-shadow: var(--shadow);
+}
+
+.card-img {
+  width: 100%;
+  aspect-ratio: 3 / 4;
+  object-fit: cover;
+  display: block;
+  transition: transform .4s var(--ease);
+}
+
+.card:hover .card-img { transform: scale(1.05); }
+
+.card-body {
+  position: absolute;
+  inset: auto 0 0;
+  padding: 2.5rem 1rem 1rem;
+  background: linear-gradient(to top, rgba(8, 18, 38, .92) 0%, rgba(8, 18, 38, .55) 55%, transparent 100%);
+}
+
+.card-body h3 {
+  margin: 0;
+  color: #fff;
+  font-size: 1.05rem;
+  font-weight: 600;
+  text-shadow: 0 1px 10px rgba(0, 0, 0, .5);
+}
+
+.card-body p {
+  margin: .2rem 0 0;
+  color: rgba(255, 255, 255, .78);
+  font-size: .82rem;
+  text-shadow: 0 1px 10px rgba(0, 0, 0, .5);
+}
+
+.card-badge {
+  position: absolute;
+  top: .85rem;
+  right: .85rem;
+  z-index: 2;
+  padding: .3rem .7rem;
+  background: var(--brand);
+  color: #fff;
+  font-size: .66rem;
+  font-weight: 700;
+  letter-spacing: .09em;
+  text-transform: uppercase;
+  border-radius: var(--radius-pill);
+  box-shadow: 0 2px 10px rgba(10, 24, 48, .28);
+}
+
+/* Destacada: se mantiene la corona, cambia el marco */
+.card--feat {
+  outline: none;
+  border-color: var(--gold);
+  box-shadow: 0 6px 26px rgba(212, 175, 55, .18);
+}
+
+.card--feat:hover { box-shadow: 0 14px 40px rgba(212, 175, 55, .28); }
+
+.card--feat::before {
+  content: "✦ Destacada";
+  position: absolute;
+  top: .85rem;
+  left: .85rem;
+  z-index: 2;
+  background: var(--gold);
+  color: #2A2000;
+  font-size: .66rem;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  padding: .3rem .65rem;
+  border-radius: var(--radius-pill);
+}
+
+/* Slots vacíos "Tu Espacio Aquí" */
+.card--empty {
+  border: 2px dashed var(--border-strong);
+  background: var(--bg-secondary);
+  box-shadow: none;
+}
+
+.card--empty:hover {
+  border-color: var(--brand);
+  background: #fff;
+  box-shadow: var(--shadow);
+}
+
+.card-empty-inner {
+  aspect-ratio: 3 / 4;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: .4rem;
+  padding: 1.25rem;
+  text-align: center;
+}
+
+.card-empty-plus {
+  font-size: 2.4rem;
+  line-height: 1;
+  color: var(--brand);
+  font-weight: 300;
+}
+
+.card-empty-inner h3 {
+  margin: .35rem 0 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.card-empty-inner p { margin: 0; color: var(--text-secondary); font-size: .82rem; }
+
+@media (max-width: 640px) {
+  .grid { grid-template-columns: repeat(2, 1fr); gap: 1rem; padding: 0 1rem 3rem; }
+  .card-body { padding: 2rem .75rem .75rem; }
+  .card-body h3 { font-size: .95rem; }
+  .card-body p { font-size: .75rem; }
+}
+
+/* =========================================================================
+   7. BARRA DE FILTROS (páginas de categoría)
+   Sin cambios en markup ni ids: solo color, radio y foco.
+   ========================================================================= */
+.filter-bar {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  flex-wrap: wrap;
+  max-width: var(--shell);
+  margin: 0 auto;
+  padding: 1.25rem 1.5rem 1.75rem;
+}
+
+.filter-search { flex: 1; min-width: 220px; position: relative; }
+
+.filter-search input {
+  width: 100%;
+  min-height: 48px;
+  padding: .75rem 1rem .75rem 2.75rem;
+  background: var(--bg-card);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-pill);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: .92rem;
+  outline: none;
+  transition: border-color .2s var(--ease), box-shadow .2s var(--ease);
+}
+
+.filter-search input::placeholder { color: var(--text-muted); }
+
+.filter-search input:focus {
+  border-color: var(--brand);
+  box-shadow: 0 0 0 4px rgba(74, 139, 201, .16);
+}
+
+.filter-search .search-icon {
+  position: absolute;
+  left: 1.05rem;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 1rem;
+  pointer-events: none;
+}
+
+.filter-group { display: flex; gap: .5rem; align-items: center; }
+
+.filter-group label {
+  font-size: .72rem;
+  font-weight: 600;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.filter-group input,
+.filter-group select {
+  min-height: 48px;
+  padding: .6rem .9rem;
+  background: var(--bg-card);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: .88rem;
+  outline: none;
+  transition: border-color .2s var(--ease), box-shadow .2s var(--ease);
+}
+
+.filter-group select { max-width: 160px; cursor: pointer; }
+.filter-group input { max-width: 96px; }
+
+.filter-group input:focus,
+.filter-group select:focus {
+  border-color: var(--brand);
+  box-shadow: 0 0 0 4px rgba(74, 139, 201, .16);
+}
+
+@media (max-width: 640px) {
+  .filter-bar { padding: 1rem 1rem 1.5rem; gap: .75rem; }
+  .filter-search { min-width: 100%; }
+  .filter-group { flex: 1; }
+  .filter-group input, .filter-group select { max-width: none; flex: 1; }
+}
+
+/* =========================================================================
+   8. FOOTER
+   El markup lo inyecta js/footer.js y es compartido por 22 páginas. Solo
+   se cambia el aspecto; ningún enlace, aviso ni badge se toca.
+   ========================================================================= */
+.footer {
+  margin-top: 0;
+  background: var(--brand-deep);
+  color: rgba(255, 255, 255, .68);
+  font-size: .85rem;
+  border-top: 3px solid transparent;
+  border-image: linear-gradient(90deg, var(--brand-deep), var(--brand), var(--accent)) 1;
+}
+
+.footer a { color: rgba(255, 255, 255, .82); }
+.footer a:hover { color: #fff; }
+
+.footer-inner { max-width: var(--shell); margin: 0 auto; padding: 0; }
+
+/* Franja 1: enlaces legales, en columnas ordenadas */
+.footer-links {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: .85rem 2rem;
+  padding: 3.5rem 2rem;
+  border-bottom: 1px solid rgba(255, 255, 255, .1);
+}
+
+.footer-links a {
+  position: relative;
+  color: rgba(255, 255, 255, .72);
+  font-size: .8rem;
+  font-weight: 500;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  text-decoration: none;
+  padding-bottom: 3px;
+  transition: color .2s var(--ease);
+}
+
+/* Subrayado que crece desde la izquierda */
+.footer-links a::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 0;
+  height: 1px;
+  background: var(--brand);
+  transition: width .28s var(--ease);
+}
+
+.footer-links a:hover { color: #fff; }
+.footer-links a:hover::after { width: 100%; }
+
+/* Franja 2: descargo + copyright */
+.footer-disclaimer {
+  padding: 2.75rem 2rem 2.5rem;
+  text-align: center;
+  line-height: 1.75;
+  max-width: 820px;
+  margin: 0 auto;
+}
+
+.footer-disclaimer p {
+  margin: 0 auto 1rem;
+  max-width: 72ch;
+  font-size: .82rem;
+  color: rgba(255, 255, 255, .6);
+}
+
+.footer-brand {
+  margin: 2rem 0 0;
+  color: #fff;
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  font-weight: 600;
+  letter-spacing: .06em;
+}
+
+.footer-legal-line { font-size: .78rem; color: rgba(255, 255, 255, .5); }
+
+/* Badges +18 / RTA */
+.footer-badges {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: .75rem;
+  margin-top: 1.75rem;
+}
+
+.footer-badge {
+  border: 1px solid rgba(255, 255, 255, .22);
+  border-radius: var(--radius-sm);
+  padding: .4rem .85rem;
+  font-size: .68rem;
+  font-weight: 700;
+  letter-spacing: .1em;
+  color: rgba(255, 255, 255, .75);
+  text-decoration: none;
+  transition: color .2s var(--ease), border-color .2s var(--ease);
+}
+
+a.footer-badge:hover { color: #fff; border-color: var(--brand); }
+
+/* Franja 3: banda anti-trata */
+.footer-stop {
+  background: #0A1A36;
+  border-top: 1px solid rgba(255, 255, 255, .1);
+}
+
+.footer-stop-inner {
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 2.25rem 2rem;
+  display: flex;
+  align-items: center;
+  gap: 1.75rem;
+}
+
+.footer-stop-icon { flex-shrink: 0; display: flex; }
+.footer-stop-icon img { display: block; filter: blur(1px); }
+
+.footer-stop-text { font-size: .84rem; line-height: 1.65; }
+.footer-stop-text p { margin: 0 0 .5rem; }
+
+.footer-stop-title {
+  margin: 0 0 .6rem;
+  color: #fff;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.05rem;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+}
+
+.footer-stop-text strong { color: #fff; }
+.footer-stop-text a { color: var(--gold); text-decoration: underline; }
+.footer-stop-text a:hover { color: #fff; }
+
+@media (max-width: 640px) {
+  .footer-links { padding: 2.5rem 1.25rem; grid-template-columns: 1fr 1fr; }
+  .footer-disclaimer { padding: 2.25rem 1.25rem 2rem; }
+  .footer-stop-inner { flex-direction: column; text-align: center; padding: 2rem 1.25rem; }
+}
+
+/* =========================================================================
+   9. ACCESIBILIDAD DE MOVIMIENTO
+   ========================================================================= */
+@media (prefers-reduced-motion: reduce) {
+  .card,
+  .cat-card,
+  .cat-card-media img,
+  .card-img,
+  .header-cta,
+  .cat-btn,
+  .footer-links a::after {
+    transition: none;
+  }
+  .card:hover,
+  .cat-card:hover,
+  .header-cta:hover,
+  .cat-btn:hover { transform: none; }
+  .card:hover .card-img,
+  .cat-card:hover .cat-card-media img { transform: none; }
+}

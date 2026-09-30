@@ -46,6 +46,7 @@
   }
   </script>
   <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="/css/redesign.css">
   <script src="/js/legal-notices.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="/js/supabase.js"></script>
@@ -53,17 +54,30 @@
 </head>
 <body>
   <header class="header">
-    <a href="/" class="header-logo"><img src="/img/logo_final.png" alt="Bellas Independientes"></a>
-    <nav class="header-nav">
-      <a href="/mujeres.html">Mujeres</a>
-      <a href="/hombres.html">Hombres</a>
-      <a href="/trans.html">Trans</a>
-      <a href="/masajistas.html">Masajistas</a>
-      <a href="/planes.html">Planes</a>
-      <a href="/dashboard/login.html">Acceder</a>
-    </nav>
+    <div class="header-bar">
+      <a href="/" class="header-logo"><img src="/img/logo_final.png" alt="Bellas Independientes"></a>
+      <nav class="header-nav">
+        <a href="/mujeres.html">Mujeres</a>
+        <a href="/hombres.html">Hombres</a>
+        <a href="/trans.html">Trans</a>
+        <a href="/masajistas.html">Masajistas</a>
+        <a href="/planes.html">Planes</a>
+        <a href="/dashboard/login.html">Acceder</a>
+      </nav>
+      <div class="header-actions">
+        <a href="/mujeres.html" class="header-icon" aria-label="Buscar anuncios">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.2-3.2"/></svg>
+        </a>
+        <a href="/dashboard/login.html" class="header-icon" aria-label="Acceder a mi cuenta">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        </a>
+        <a href="/dashboard/verificacion.html" class="header-cta">Publica tu anuncio</a>
+      </div>
+    </div>
   </header>
 
+  <!-- El mosaico original de 3 fotos queda en el markup, oculto por
+       css/redesign.css. No se borró ningún archivo. -->
   <section class="hero" id="hero">
     <div class="hero-item">
       <img src="/img/hero_mujer.jpg" alt="" loading="lazy">
@@ -77,14 +91,72 @@
     <div class="hero-item">
       <img src="/img/hero_trans.jpg" alt="" loading="lazy">
     </div>
+
+    <div class="hero-stage">
+      <div class="hero-copy">
+        <h1><span>Vos buscás.</span> <span>Nosotros mostramos.</span> <span>Vos elegís.</span></h1>
+        <p class="hero-lead">Perfiles verificados, fotos reales y contacto directo. Sin intermediarios, sin preguntas incómodas.</p>
+        <div class="hero-search">
+          <span class="hero-search-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.2-3.2"/></svg>
+          </span>
+          <span class="hero-search-text">Busca por categoría...</span>
+        </div>
+        <nav class="categories-nav">
+          <a href="/mujeres.html" class="cat-btn">Mujeres</a>
+          <a href="/hombres.html" class="cat-btn">Hombres</a>
+          <a href="/trans.html" class="cat-btn">Trans</a>
+          <a href="/masajistas.html" class="cat-btn">Masajistas</a>
+        </nav>
+      </div>
+    </div>
   </section>
 
-  <nav class="categories-nav">
-    <a href="/mujeres.html" class="cat-btn">Mujeres</a>
-    <a href="/hombres.html" class="cat-btn">Hombres</a>
-    <a href="/trans.html" class="cat-btn">Trans</a>
-    <a href="/masajistas.html" class="cat-btn">Masajistas</a>
-  </nav>
+  <section class="cat-section" aria-labelledby="cat-title">
+    <div class="section-head">
+      <span class="section-kicker">✦ Directorio</span>
+      <h2 class="section-head-title" id="cat-title">Elegí tu categoría</h2>
+      <p class="section-head-sub">Tres formas de explorar el directorio</p>
+    </div>
+    <div class="cat-grid">
+      <a href="/mujeres.html" class="cat-card">
+        <div class="cat-card-media">
+          <img src="/img/hero_mujer.jpg" alt="Anuncios de mujeres" loading="lazy" width="810" height="781">
+          <h3 class="cat-card-title">Mujeres</h3>
+        </div>
+        <div class="cat-card-body">
+          <p>Perfiles de mujeres verificadas en Tucumán, con fotos reales y zona de trabajo publicada.</p>
+          <span class="cat-card-btn">Ver anuncios
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+          </span>
+        </div>
+      </a>
+      <a href="/hombres.html" class="cat-card">
+        <div class="cat-card-media">
+          <img src="/img/hero_hombres.jpg" alt="Anuncios de hombres" loading="lazy" width="400" height="309">
+          <h3 class="cat-card-title">Hombres</h3>
+        </div>
+        <div class="cat-card-body">
+          <p>Perfiles de hombres en la zona, con contacto directo y disponibilidad publicada.</p>
+          <span class="cat-card-btn">Ver anuncios
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+          </span>
+        </div>
+      </a>
+      <a href="/trans.html" class="cat-card">
+        <div class="cat-card-media">
+          <img src="/img/hero_trans.jpg" alt="Anuncios trans" loading="lazy" width="471" height="379">
+          <h3 class="cat-card-title">Trans</h3>
+        </div>
+        <div class="cat-card-body">
+          <p>Perfiles trans verificados, con fotos reales y atención respetuosa, sin etiquetas.</p>
+          <span class="cat-card-btn">Ver anuncios
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+          </span>
+        </div>
+      </a>
+    </div>
+  </section>
 
   <section class="feat" id="featured-section" hidden>
     <div class="section-head">
