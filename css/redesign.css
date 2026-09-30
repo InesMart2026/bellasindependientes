@@ -351,8 +351,8 @@ a:hover { color: var(--brand); }
   gap: .75rem;
   max-width: 620px;
   margin: 2rem 0 0;
-  padding: 1rem 1.4rem;
-  min-height: 60px;
+  padding: .5rem 1.25rem;
+  min-height: 58px;
   background: #fff;
   border-radius: var(--radius-pill);
   box-shadow: var(--shadow-lg);
@@ -361,10 +361,40 @@ a:hover { color: var(--brand); }
 .hero-search-icon { flex-shrink: 0; display: flex; color: var(--brand-dark); }
 .hero-search-icon svg { width: 21px; height: 21px; }
 
-.hero-search-text {
-  color: var(--text-muted);
+/* Buscador real: filtra los perfiles ya descargados (ver script en index.html).
+   El input es transparente sobre la barra blanca: mantiene el radio y la
+   sombra del contenedor y no duplica padding. */
+.hero-search-input {
+  flex: 1;
+  min-width: 0;
+  /* Estira a lo alto del contenedor: el input ES el target táctil y debe
+     medir los 54-60px, no los 19px de su línea de texto. */
+  align-self: stretch;
+  min-height: 44px;
+  border: 0;
+  background: transparent;
+  color: var(--text-primary);
+  font-family: var(--font-body);
   font-size: .95rem;
-  user-select: none;
+  outline: none;
+}
+
+.hero-search-input::placeholder { color: var(--text-muted); }
+
+/* El foco lo muestra el contenedor, no el input (que es transparente) */
+.hero-search:focus-within {
+  box-shadow: var(--shadow-lg), 0 0 0 3px rgba(74, 139, 201, .45);
+}
+
+/* Solo para lectores de pantalla */
+.visually-hidden {
+  position: absolute;
+  width: 1px; height: 1px;
+  margin: -1px; padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 /* Categorías: se vuelven pills dentro del hero. Estructura y href intactos. */
@@ -409,7 +439,7 @@ a:hover { color: var(--brand); }
   .hero { height: clamp(360px, 82vw, 440px); }
   .hero-stage { background-position: 68% center; }
   .hero-copy { padding: 2.5rem 1.25rem; }
-  .hero-search { margin-top: 1.5rem; padding: .85rem 1.1rem; min-height: 54px; }
+  .hero-search { margin-top: 1.5rem; padding: .4rem 1.1rem; min-height: 52px; }
   .categories-nav { gap: .4rem; }
   .cat-btn { padding: .5rem .9rem; font-size: .7rem; }
 }
